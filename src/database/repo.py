@@ -91,11 +91,24 @@ def default_db_path() -> Path:
     return project_root() / "data" / "db" / "selects.sqlite"
 
 
-def connect(path: Optional[Path] = None, *, create: bool = True) -> sqlite3.Connection:
-    """打开（并自动建表）数据库连接。"""
+def connect(
+    path: Optional[Path] = None,
+    *,
+    create: bool = True,
+    check_same_thread: bool = True,
+) -> sqlite3.Connection:
+    """打开（并自动建表）数据库连接。
+
+    ``check_same_thread=False`` 专供 Web 层：FastAPI 的**同步生成器依赖**由
+    ``contextmanager_in_threadpool`` 调度，同一次请求内「建连接 / 用连接 / 关连接」
+    会落在 anyio 线程池的**不同工作线程**上（串行、不并发）。SQLite 默认禁止
+    跨线程使用连接，并发请求下会抛 ``ProgrammingError``。由于每个请求独占一个
+    连接、任意时刻只有一个线程在用它，放开该检查是安全的。
+    脚本与测试保持默认 ``True``，以便尽早暴露误用。
+    """
     db_path = Path(path) if path else default_db_path()
     ensure_dir(db_path.parent)
-    conn = sqlite3.connect(str(db_path))
+    conn = sqlite3.connect(str(db_path), check_same_thread=check_same_thread)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.execute("PRAGMA journal_mode = WAL;")

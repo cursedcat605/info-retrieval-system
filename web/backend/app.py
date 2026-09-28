@@ -67,8 +67,15 @@ _PORTAL_HOME = get(["web", "portal_home"], "https://my.muc.edu.cn/page/11")
 # 依赖
 # --------------------------------------------------------------------------- #
 def get_conn() -> Iterator[sqlite3.Connection]:
-    """每个请求一个短连接：SQLite 只读场景下最省心，避免跨线程复用。"""
-    conn = connect(create=False)
+    """每个请求一个短连接：SQLite 只读场景下最省心，避免跨线程复用。
+
+    注意 ``check_same_thread=False``：FastAPI 对同步生成器依赖走
+    ``contextmanager_in_threadpool``，同一次请求里 ``connect()``、端点查询体、
+    ``conn.close()`` 会分别落到线程池的**不同线程**（串行执行、不并发）。若沿用
+    SQLite 默认的同线程限制，并发请求会随机抛 ``ProgrammingError`` 并返回 500。
+    每个请求独占连接，任一时刻只有一个线程在访问它，因此这里放开限制是安全的。
+    """
+    conn = connect(create=False, check_same_thread=False)
     try:
         yield conn
     finally:
