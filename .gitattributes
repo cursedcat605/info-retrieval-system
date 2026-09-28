@@ -1,0 +1,28 @@
+# 统一换行符：仓库内统一为 LF，检出到 Windows 工作区时按需转换
+* text=auto
+
+# Windows 脚本明确使用 CRLF，避免手工编辑 / 双击运行时出现异常
+*.ps1 text eol=crlf
+*.vbs text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制文件，禁止换行符与编码转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.sqlite binary
+*.sqlite3 binary
+*.onnx binary
+*.pt binary
+*.pth binary
+*.xlsx binary
+*.docx binary
+
+# 单据/数据文件保持原样，GitHub 也能按语言高亮统计
+*.jsonl text
+*.csv text

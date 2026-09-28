@@ -1,0 +1,89 @@
+# ===== 全局配置 =====
+project:
+  name: "选调生去向信息检索系统"
+  version: "0.1.0"
+
+# ===== 数据采集 =====
+crawler:
+  base_url: "${PORTAL_BASE_URL}"        # 从 .env 读取
+  target_keyword: "选调分享"             # 目标栏目/关键词（推荐：选调分享 / 选调经验）
+  # 信息门户「通知公告」后端接口
+  notice_api_root: "https://my.muc.edu.cn/comsys-portal-notice-web"
+  list_endpoint: "/getNoticeByPage"     # 通知列表（需登录会话）
+  detail_endpoint: ""                   # 列表已含正文，无需详情接口
+  image_host: "http://my.muc.edu.cn"    # 图片可公网直连下载
+  list_url: "https://my.muc.edu.cn/page/11#/notice/noticeList"
+  max_pages: 50                         # 最多翻页数
+  page_size: 50
+  request_interval: 2.0                 # 请求间隔（秒），注意限速合规
+  timeout: 30
+  retry: 3
+  image_ext: [".jpg", ".jpeg", ".png", ".webp", ".gif"]
+  # 编辑器占位图，需过滤
+  skip_image_markers: ["spacer.gif", "/static/index/UEditor/", "loadingclass"]
+  user_agent: "Mozilla/5.0 (compatible; InfoRetrievalBot/0.1)"
+  output:
+    images_dir: "data/raw/images"
+    metadata_dir: "data/raw/metadata"
+
+# ===== OCR =====
+ocr:
+  engine: "rapidocr"                     # 默认 rapidocr（onnxruntime，离线可用、安装简单）
+  fallback: ["rapidocr", "paddleocr", "tesseract"]   # 引擎不可用时的降级顺序
+  lang: "ch"                             # 中文
+  use_gpu: false
+  det_db_thresh: 0.3
+  rec_score_thresh: 0.5                  # 低于该置信度的结果标记待人工复核
+  min_side: 1200                         # 预处理：短边放大到该尺寸（提升小字识别率）
+  max_side: 4000
+  output_dir: "data/interim/ocr_text"
+
+# ===== 文本清洗 =====
+preprocess:
+  remove_whitespace: true
+  normalize_fullwidth: true              # 全角转半角
+  fix_common_typos: true
+  min_line_length: 2
+
+# ===== NLP / 字段抽取 =====
+nlp:
+  segmenter: "jieba"
+  user_dict: "config/dict/selects_terms.txt"   # 选调领域自定义词典
+  # 业务需要的核心字段（与数据库表 selects_records 列一一对应）
+  fields: [name, cohort, college, major, destination_org, city, position]
+  # 附加辅助字段
+  extra_fields: [province, degree, cohort_year]
+
+# ===== 数据库 =====
+database:
+  url: "${DATABASE_URL}"                 # 缺省时自动回退到 SQLite: data/db/selects.sqlite
+  sqlite_path: "data/db/selects.sqlite"
+  echo: false
+  tables:
+    posts: "images"                      # 通知/海报元数据
+    details: "selects_records"           # 选调生去向记录（核心表）
+    fts: "selects_fts"                   # FTS5 全文索引
+
+# ===== 检索 =====
+search:
+  page_size: 20                          # 默认每页条数
+  max_page_size: 100
+
+# ===== Web 服务 =====
+web:
+  host: "127.0.0.1"
+  port: 8000
+  cors_origins:                          # 允许跨域的前端来源（仅开发用）
+    - "http://localhost:8000"
+    - "http://127.0.0.1:8000"
+  portal_home: "https://my.muc.edu.cn/page/11"   # 门户首页（无标题时回退）
+  # 「查看原文」链接模板：{keyword} 会被替换为通知标题（URL 编码）
+  portal_list_url: "https://my.muc.edu.cn/page/11#/notice/noticeList?lo={keyword}"
+  # 若门户有稳定的通知详情页，在此填写含 {notice_id} 的模板，优先级更高
+  portal_detail_url: ""
+
+# ===== 输出 =====
+paths:
+  processed_dir: "data/processed"
+  db_dir: "data/db"
+  log_dir: "logs"

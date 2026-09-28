@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>记录详情 · 选调生去向信息检索系统</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">选</span><span>选调生去向信息检索</span></div>
+  <nav>
+    <a href="/">检索</a>
+    <a href="/stats.html">统计分析</a>
+      <a href="/docs" target="_blank" rel="noopener">接口文档</a>
+  </nav>
+</header>
+
+<div class="pagehead">
+  <h1 id="detail-title">记录详情</h1>
+  <div class="sub" id="detail-sub">加载中…</div>
+  <div class="actions">
+    <button class="btn ghost" id="btn-back">‹ 返回检索结果</button>
+    <a class="btn" id="btn-source" href="#" target="_blank" rel="noopener">查看原文 ↗</a>
+    <a class="btn ghost" id="btn-image" href="#" target="_blank" rel="noopener">查看原始图片 ↗</a>
+  </div>
+</div>
+
+<!-- 需求十四：三栏结构 -->
+<div class="detail-grid" id="detail-grid" hidden>
+  <section class="panel">
+    <h3>基本信息</h3>
+    <dl class="kv" id="col-basic"></dl>
+  </section>
+  <section class="panel">
+    <h3>选调生信息</h3>
+    <dl class="kv" id="col-selects"></dl>
+  </section>
+  <section class="panel">
+    <h3>来源信息</h3>
+    <dl class="kv" id="col-source"></dl>
+  </section>
+</div>
+
+<div class="section">
+  <div class="grid2">
+    <section class="panel">
+      <h3>原文文本</h3>
+      <div class="rawtext" id="rawtext">加载中…</div>
+      <div class="meta-note" id="rawtext-note"></div>
+    </section>
+    <section class="panel">
+      <h3>原始图片</h3>
+      <a id="image-link" href="#" target="_blank" rel="noopener">
+        <img class="thumb" id="image-thumb" alt="原始通知图片" />
+      </a>
+      <div class="meta-note" id="image-note"></div>
+    </section>
+  </div>
+</div>
+
+<div class="section">
+  <section class="panel">
+    <h3>识别证据（原文出处，用于人工核对与可信度评估）</h3>
+    <div class="evidence" id="evidence">—</div>
+    <div class="meta-note" id="evidence-note"></div>
+  </section>
+</div>
+
+<script src="/common.js"></script>
+<script src="/detail.js"></script>
+</body>
+</html>

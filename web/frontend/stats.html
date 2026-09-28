@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>统计分析 · 选调生去向信息检索系统</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">选</span><span>选调生去向信息检索</span></div>
+  <nav>
+    <a href="/">检索</a>
+    <a href="/stats.html" class="active">统计分析</a>
+      <a href="/docs" target="_blank" rel="noopener">接口文档</a>
+  </nav>
+</header>
+
+<div class="pagehead">
+  <h1>统计分析</h1>
+  <div class="sub" id="stats-sub">加载中…</div>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="charts">
+  <section class="chart wide">
+    <h3>15.1 省份分布</h3>
+    <div class="hint">按去向省份统计的记录数（柱状图，取 TOP 15）</div>
+    <div class="canvas" id="chart-province"></div>
+  </section>
+
+  <section class="chart">
+    <h3>15.2 届别趋势</h3>
+    <div class="hint">各届别（毕业年份）人数变化（折线图，按年份升序）</div>
+    <div class="canvas" id="chart-cohort"></div>
+  </section>
+
+  <section class="chart">
+    <h3>15.3 岗位类别</h3>
+    <div class="hint">岗位归一化类别占比（饼图）</div>
+    <div class="canvas" id="chart-category"></div>
+  </section>
+
+  <section class="chart wide">
+    <h3>15.4 学院分布</h3>
+    <div class="hint">输出选调生的学院排名（横向柱状图，取 TOP 15）</div>
+    <div class="canvas" id="chart-college"></div>
+  </section>
+
+  <section class="chart">
+    <h3>附加：学历层次</h3>
+    <div class="hint">本科 / 硕士 / 博士占比（环形图）</div>
+    <div class="canvas" id="chart-degree"></div>
+  </section>
+
+  <section class="chart">
+    <h3>附加：去向城市</h3>
+    <div class="hint">主要落位城市（横向柱状图，取 TOP 15）</div>
+    <div class="canvas" id="chart-city"></div>
+  </section>
+
+  <section class="chart wide">
+    <h3>字段填充率</h3>
+    <div class="hint">抽取质量体检：过低说明该字段仍需优化规则</div>
+    <div class="canvas" id="chart-fill" style="height:240px;"></div>
+  </section>
+</div>
+
+<!-- ECharts 由 stats.js 异步加载（带超时），CDN 不可达时自动降级为纯 CSS 条形图。
+     注意：切勿在此处以阻塞方式引入 CDN 脚本——CDN 挂起会连带阻塞 DOMContentLoaded，
+     页面会一直停在「加载中」。 -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<script src="/common.js"></script>
+<script src="/stats.js"></script>
+</body>
+</html>
