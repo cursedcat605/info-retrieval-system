@@ -30,6 +30,7 @@
 
     <!-- 筛选面板底部的提交按钮：分面组很长时也能随手点到 -->
     <div class="sidebar-actions">
+      <div id="filter-hint" class="filter-hint" hidden>筛选条件已修改，点击「搜索」查看结果</div>
       <button type="button" class="btn" data-search>搜索</button>
     </div>
   </aside>
@@ -38,12 +39,24 @@
   <section>
     <div class="searchbar">
       <input id="q" type="search" autocomplete="off" spellcheck="false"
-             placeholder="输入姓名 / 拼音（zhangsan 或 zs）/ 学院 / 专业 / 省份 / 单位…" />
+             placeholder="输入姓名 / 拼音 / 学院 / 专业 / 省份 / 单位…" />
       <button id="btn-search" class="btn" data-search>搜索</button>
+      <!-- 详细用法收进问号里，避免正文堆一段说明 -->
+      <button id="btn-help" class="help-btn" type="button"
+              aria-label="检索使用说明" aria-expanded="false" title="检索使用说明">?</button>
       <div id="suggest" class="suggest"></div>
     </div>
-    <div class="pinyin-hint">
-      支持拼音检索：<kbd>zhangsan</kbd> 全拼、<kbd>zs</kbd> 声母缩写均可命中「张三」；多个关键词用空格分隔（默认为「与」）。
+
+    <div id="search-help" class="help-pop" hidden>
+      <h3>检索使用说明</h3>
+      <ul>
+        <li><b>关键词</b>：姓名、学院、专业、省份、城市、单位、岗位都能搜。中文 3 字及以上走全文索引，1~2 字走模糊匹配。</li>
+        <li><b>拼音</b>：<kbd>zhangsan</kbd> 全拼、<kbd>zs</kbd> 声母缩写均可命中「张三」；输入 1~2 个字母时按声母前缀匹配。</li>
+        <li><b>多个关键词</b>：用空格（逗号、顿号、<kbd>+</kbd>、<kbd>|</kbd> 也行）分隔，默认为「与」，即都要命中；若没有记录同时命中全部关键词，会自动放宽为「或」。</li>
+        <li><b>筛选条件</b>：勾选后需要点击「搜索」才会生效。同一维度内的多个值是「或」，不同维度之间是「与」。</li>
+        <li><b>结果列表</b>：可用「卡片 / 表格」切换展示形式，用「排序方式」「每页条数」调整排版；点击卡片右下角「查看详情」可看原图。</li>
+      </ul>
+      <p class="muted">数据来自各学院公开的毕业生去向分享海报，字段由 OCR 自动抽取，个别字段可能缺失或有误，仅供参考。</p>
     </div>
 
     <div class="toolbar">

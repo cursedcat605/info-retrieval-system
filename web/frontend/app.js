@@ -53,17 +53,22 @@
 
   function bindEvents() {
     // 顶部搜索框旁与左侧筛选面板底部的「搜索」按钮行为一致：
-    // 都用 run(1) 回到第一页重新检索（关键词在 run() 里从 #q 读回来）。
+    // 都用 run(1) 回到第一页重新检索（关键词在 run() 里从 #q 读回来，
+    // 筛选条件则由 onFacetChange / onTagClick 预先写进 state.filters）。
+    // 筛选器里的勾选不会自动检索，必须由这里（或回车 / 翻页 / 改排序）提交。
     document.querySelectorAll('[data-search]').forEach((btn) => {
-      btn.addEventListener('click', () => run(1));
+      btn.addEventListener('click', () => { toggleHelp(false); run(1); });
     });
     $('#q').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { closeSuggest(); run(1); }
+      if (e.key === 'Enter') { closeSuggest(); toggleHelp(false); run(1); }
     });
     $('#q').addEventListener('input', onTypeSuggest);
     $('#q').addEventListener('focus', () => { if (lastSuggest) openSuggest(); });
+    $('#btn-help').addEventListener('click', () => toggleHelp());
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.searchbar')) closeSuggest();
+      // 点在其他地方就收起使用说明浮层（问号按钮与浮层内部除外）
+      if (!e.target.closest('#btn-help') && !e.target.closest('#search-help')) toggleHelp(false);
     });
 
     $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; run(1); });
@@ -91,6 +96,17 @@
     });
   }
 
+  /** 展开/收起「检索使用说明」浮层；不传参数时按当前状态取反。 */
+  function toggleHelp(show) {
+    const panel = $('#search-help');
+    const btn = $('#btn-help');
+    if (!panel || !btn) return;
+    const next = show === undefined ? panel.hidden : !!show;
+    panel.hidden = !next;
+    btn.setAttribute('aria-expanded', next ? 'true' : 'false');
+    btn.classList.toggle('active', next);
+  }
+
   /* ------------------------------------------------------------------ */
   /* 检索主流程                                                          */
   /* ------------------------------------------------------------------ */
@@ -113,8 +129,13 @@
       state.sort = data.sort;
       $('#sort').value = data.sort;
       IRS.writeState(state, state.dimensions);
+      // 届别要补「届」、省份要去掉「省」，展示名统一从服务端拿
+      (data.filter_tags || []).forEach((t) => setFilterLabel(t.dimension, t.value, t.display));
+      // 本次请求已经用上了当前勾选的筛选条件，记下指纹用来判断「有没有未提交的改动」
+      appliedFilterKey = filtersKey();
       renderFacets(data);
-      renderTags(data);
+      renderTags();
+      syncPendingUI();
       render(data);
       renderPager(data);
     } catch (err) {
@@ -132,6 +153,62 @@
   const FACET_PREVIEW = 8;
   const groupOpen = {};   // {dim: bool} 分面组的展开状态，以 DOM 为准
 
+  /* ---------------- 筛选条件的「待提交」状态 ---------------- */
+  // 勾选筛选条件后不再立刻发请求（否则勾三项就闪三次、结果区乱跳、选中途也看不清），
+  // 只更新界面，等用户按「搜索」再统一提交。这里用筛选条件指纹判断
+  // 当前勾选与「最后一次成功检索真正用到的条件」是否一致。
+  let appliedFilterKey = '';
+  const filterLabels = {};   // {dim: {value: 展示名}}，供未提交时本地渲染「已选条件」标签
+
+  function setFilterLabel(dim, value, label) {
+    if (!filterLabels[dim]) filterLabels[dim] = {};
+    filterLabels[dim][value] = label || value;
+  }
+
+  function labelOf(dim, value) {
+    return (filterLabels[dim] || {})[value] || value;
+  }
+
+  function filtersKey() {
+    return state.dimensions
+      .map((dim) => {
+        const values = (state.filters[dim] || []).slice().sort();
+        return values.length ? dim + '=' + values.join(',') : '';
+      })
+      .filter(Boolean)
+      .join('&');
+  }
+
+  /** 未提交的筛选改动：显示提示条并高亮两个「搜索」按钮。 */
+  function syncPendingUI() {
+    const pending = filtersKey() !== appliedFilterKey;
+    const hint = $('#filter-hint');
+    if (hint) hint.hidden = !pending;
+    document.querySelectorAll('[data-search]').forEach((btn) => {
+      btn.classList.toggle('pending', pending);
+      if (pending) btn.title = '筛选条件已修改，点击此处查看新结果';
+      else btn.removeAttribute('title');
+    });
+  }
+
+  /** 只更新分组标题上的「已选 N」角标，不重建分面 DOM（否则会丢展开状态）。 */
+  function updateFacetBadges() {
+    document.querySelectorAll('#facets details.facet-group').forEach((el) => {
+      const dim = el.querySelector('.facet-options')?.dataset.dim;
+      const summary = el.querySelector('summary');
+      if (!dim || !summary) return;
+      const count = (state.filters[dim] || []).length;
+      let badge = summary.querySelector('.badge');
+      if (!count) { if (badge) badge.remove(); return; }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'badge';
+        summary.appendChild(badge);
+      }
+      badge.textContent = `已选 ${count}`;
+    });
+  }
+
   function renderFacets(data) {
     // 重建 DOM 会丢掉 <details> 的 open 状态。以前只用「是否有已选条件」决定是否展开，
     // 于是用户点「展开更多」后整组立刻被折叠，看起来像按钮点了没反应。
@@ -141,11 +218,19 @@
       if (dim) groupOpen[dim] = el.open;
     });
     const groups = state.dimensions.map((dim) => {
-      const options = IRS.sortOptions(data.facets[dim] || []);
-      const selectedCount = (state.filters[dim] || []).length;
+      // 勾选状态一律以本地 state.filters 为准，而不是接口返回的 opt.selected：
+      // 筛选是「提交式」的，展开/收起会重渲染分面，若读服务端状态就会把
+      // 用户刚勾上、还没点「搜索」的条件还原掉。
+      const chosen = new Set(state.filters[dim] || []);
+      const options = IRS.sortOptions((data.facets[dim] || []).map((opt) => {
+        // 记住选项的展示名，这样还没提交时「已选条件」里也能显示中文标签
+        setFilterLabel(dim, opt.value, opt.label || opt.value);
+        return Object.assign({}, opt, { selected: chosen.has(opt.value) });
+      }));
+      const selectedCount = chosen.size;
       const expanded = !!expandedGroups[dim];
       const visible = expanded ? options : options.slice(0, FACET_PREVIEW);
-      const rows = visible.map((opt) => facetRow(dim, opt)).join('');
+      const rows = visible.map((opt) => facetRow(dim, opt, chosen.has(opt.value))).join('');
       const more = options.length > FACET_PREVIEW
         ? `<button type="button" class="expand-btn" data-expand="${dim}">${expanded
             ? '收起' : `展开更多（共 ${options.length} 项）`}</button>`
@@ -164,13 +249,13 @@
     $('#facets').innerHTML = groups || emptyBlock('暂无可选条件', '', true);
   }
 
-  function facetRow(dim, opt) {
+  function facetRow(dim, opt, checked) {
     const cls = ['facet-option'];
-    if (opt.selected) cls.push('selected');
+    if (checked) cls.push('selected');
     if (!opt.count) cls.push('zero');
     return `
       <label class="${cls.join(' ')}">
-        <input type="checkbox" data-dim="${dim}" value="${IRS.esc(opt.value)}" ${opt.selected ? 'checked' : ''} />
+        <input type="checkbox" data-dim="${dim}" value="${IRS.esc(opt.value)}" ${checked ? 'checked' : ''} />
         <span class="name" title="${IRS.esc(opt.value)}">${IRS.esc(opt.label || opt.value)}</span>
         <span class="count">（${IRS.num(opt.count)}）</span>
       </label>`;
@@ -184,7 +269,10 @@
     const list = new Set(state.filters[dim] || []);
     if (box.checked) list.add(value); else list.delete(value);
     if (list.size) state.filters[dim] = Array.from(list); else delete state.filters[dim];
-    run(1);
+    // 故意不调 run()：勾选完一批条件后由用户点「搜索」一次性提交。
+    updateFacetBadges();
+    renderTags();
+    syncPendingUI();
   }
 
   function onFacetClick(e) {
@@ -197,31 +285,52 @@
   /* ------------------------------------------------------------------ */
   /* 已选条件标签（需求十：可移除标签 + 清空全部）                        */
   /* ------------------------------------------------------------------ */
-  function renderTags(data) {
-    const tags = data.filter_tags || [];
+  // 标签直接从 state.filters 渲染（不再依赖接口返回的 filter_tags），
+  // 这样勾选 / 移除的瞬间就能看到标签变化，不用等请求返回。
+  function renderTags() {
+    const tags = [];
+    state.dimensions.forEach((dim) => {
+      (state.filters[dim] || []).forEach((value) => {
+        tags.push({ dimension: dim, value: value, display: labelOf(dim, value) });
+      });
+    });
     if (!tags.length) {
       $('#tagbar').innerHTML = '<span style="color:#9aa1ab;font-size:12.5px;">未选择任何筛选条件</span>';
       return;
     }
     $('#tagbar').innerHTML = tags.map((t) => `
-      <span class="tag">${IRS.esc(t.display || t.value)}
+      <span class="tag">${IRS.esc(t.display)}
         <button type="button" data-dim="${IRS.esc(t.dimension)}" data-value="${IRS.esc(t.value)}"
-                title="移除该条件" aria-label="移除 ${IRS.esc(t.display || t.value)}">×</button>
+                title="移除该条件" aria-label="移除 ${IRS.esc(t.display)}">×</button>
       </span>`).join('') + '<button type="button" class="clear-all" id="clear-all">清空全部</button>';
   }
 
   function onTagClick(e) {
-    if (e.target.closest('#clear-all')) {
-      state.filters = {};
-      run(1);
-      return;
-    }
+    const clearAll = e.target.closest('#clear-all');
     const btn = e.target.closest('button[data-dim]');
-    if (!btn) return;
-    const dim = btn.dataset.dim;
-    const list = (state.filters[dim] || []).filter((v) => v !== btn.dataset.value);
-    if (list.length) state.filters[dim] = list; else delete state.filters[dim];
-    run(1);
+    if (!clearAll && !btn) return;
+
+    if (clearAll) {
+      state.filters = {};
+      syncFacetCheckboxes(null);
+    } else {
+      const dim = btn.dataset.dim;
+      const list = (state.filters[dim] || []).filter((v) => v !== btn.dataset.value);
+      if (list.length) state.filters[dim] = list; else delete state.filters[dim];
+      syncFacetCheckboxes({ dim: dim, value: btn.dataset.value, checked: false });
+    }
+    // 移除标签同样只改界面，等「搜索」按钮统一提交
+    updateFacetBadges();
+    renderTags();
+    syncPendingUI();
+  }
+
+  /** 把分面里的勾选框对齐 state.filters（传 null 表示全部取消勾选）。 */
+  function syncFacetCheckboxes(target) {
+    document.querySelectorAll('#facets input[type=checkbox][data-dim]').forEach((box) => {
+      if (!target) { box.checked = false; return; }
+      if (box.dataset.dim === target.dim && box.value === target.value) box.checked = target.checked;
+    });
   }
 
   /* ------------------------------------------------------------------ */
