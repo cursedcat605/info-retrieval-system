@@ -13,7 +13,6 @@
   <nav>
     <a href="/" class="active">检索</a>
     <a href="/stats.html">统计分析</a>
-      <a href="/docs" target="_blank" rel="noopener">接口文档</a>
   </nav>
 </header>
 
@@ -28,6 +27,11 @@
     <div id="facets">
       <div class="facet-group"><div style="color:#6b7280;font-size:13px;padding:6px 0;">筛选条件加载中…</div></div>
     </div>
+
+    <!-- 筛选面板底部的提交按钮：分面组很长时也能随手点到 -->
+    <div class="sidebar-actions">
+      <button type="button" class="btn" data-search>搜索</button>
+    </div>
   </aside>
 
   <!-- ============ 右侧：检索与结果 ============ -->
@@ -35,7 +39,7 @@
     <div class="searchbar">
       <input id="q" type="search" autocomplete="off" spellcheck="false"
              placeholder="输入姓名 / 拼音（zhangsan 或 zs）/ 学院 / 专业 / 省份 / 单位…" />
-      <button id="btn-search" class="btn">搜索</button>
+      <button id="btn-search" class="btn" data-search>搜索</button>
       <div id="suggest" class="suggest"></div>
     </div>
     <div class="pinyin-hint">

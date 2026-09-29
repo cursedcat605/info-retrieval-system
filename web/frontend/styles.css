@@ -210,6 +210,21 @@ a:hover { text-decoration: underline; }
   cursor: pointer; font-size: 12.5px; padding: 3px 6px; text-align: left;
 }
 
+/* ---------------- 筛选面板底部的「搜索」按钮 ---------------- */
+/* 分面列表（城市 74 项）比侧栏还长，按钮若跟着内容走就会被推出视口，
+   所以让它 sticky 常驻在面板底部；负外边距用来抵掉 .sidebar 的内边距，
+   使按钮通栏贴住面板边缘。 */
+.sidebar-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 14px -14px -18px;
+  padding: 10px 14px;
+  background: var(--c-panel);
+  border-top: 1px solid var(--c-border);
+}
+
+.sidebar-actions .btn { width: 100%; }
+
 /* ---------------- 检索区 ---------------- */
 .searchbar { display: flex; gap: 8px; position: relative; }
 

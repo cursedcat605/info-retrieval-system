@@ -52,7 +52,11 @@
   }
 
   function bindEvents() {
-    $('#btn-search').addEventListener('click', () => run(1));
+    // 顶部搜索框旁与左侧筛选面板底部的「搜索」按钮行为一致：
+    // 都用 run(1) 回到第一页重新检索（关键词在 run() 里从 #q 读回来）。
+    document.querySelectorAll('[data-search]').forEach((btn) => {
+      btn.addEventListener('click', () => run(1));
+    });
     $('#q').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { closeSuggest(); run(1); }
     });
