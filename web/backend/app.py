@@ -39,6 +39,7 @@ from src.search import (
     DIMENSION_LABELS,
     MAX_PAGE_SIZE,
     SORT_LABELS,
+    fuzzy as fuzzy_terms,
     get_detail,
     query as search_query,
     suggestions,
@@ -172,6 +173,8 @@ def create_app() -> FastAPI:
             "default_page_size": DEFAULT_PAGE_SIZE,
             "max_page_size": MAX_PAGE_SIZE,
             "portal_home": _PORTAL_HOME,
+            # 模糊匹配词表（人工维护）的加载情况，便于前端展示与排障
+            "fuzzy": fuzzy_terms.summary(),
         }
 
     # ---------------- 检索 ---------------- #
@@ -229,10 +232,10 @@ def create_app() -> FastAPI:
             )
         }
 
-    @app.get("/api/stats", summary="统计分析（需求十五）")
+    @app.get("/api/stats", summary="统计分析")
     def api_stats(top_n: int = 15, conn: sqlite3.Connection = Conn) -> Dict[str, Any]:
         data = stats_overview(conn, top_n=max(1, min(top_n, 50)))
-        # 学历字段来自派生列，便于前端画附加环形图
+        # 学历字段来自派生列，便于前端画环形图
         data["degree_level"] = [
             {"value": r["value"], "count": r["count"]}
             for r in data.get("degree_level", [])

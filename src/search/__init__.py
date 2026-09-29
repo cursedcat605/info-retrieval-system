@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+from . import fuzzy
 from . import highlight
 from .engine import (
     DEFAULT_PAGE_SIZE,
@@ -30,6 +31,7 @@ __all__ = [
     "DIMENSION_LABELS",
     "MAX_PAGE_SIZE",
     "SORT_LABELS",
+    "fuzzy",
     "get_detail",
     "highlight",
     "parse_filters",

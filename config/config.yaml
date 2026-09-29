@@ -68,6 +68,10 @@ database:
 search:
   page_size: 20                          # 默认每页条数
   max_page_size: 100
+  # 模糊匹配词表（人工维护的「简写/别称 → 库中正式写法」映射）。
+  # 搜「信工」能命中「信息工程学院」就靠它；文件 mtime 变化时自动重载，
+  # 改完**不需要重启 Web 服务**。
+  fuzzy_terms_path: "config/fuzzy_terms.yaml"
 
 # ===== Web 服务 =====
 web:

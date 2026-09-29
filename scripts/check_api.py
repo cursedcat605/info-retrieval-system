@@ -182,7 +182,24 @@ def main(argv: Optional[List[str]] = None) -> int:
             str(multi.get("mode")))
     c.check("多关键词 mode 为 and 或 or", multi["mode"] in ("and", "or"), multi["mode"])
 
-    # ---------------- 9. 详情（需求十四） ---------------- #
+    # ---------------- 9. 模糊匹配（人工词表 config/fuzzy_terms.yaml） ---------------- #
+    fuzzy = client.get("/api/search", params={"q": "信工"}).json()
+    c.check("「信工」被扩展为「信息工程学院」",
+            "信息工程学院" in fuzzy.get("search_terms", []), str(fuzzy.get("search_terms")))
+    c.check("「信工」命中且 mode 为 fuzzy",
+            fuzzy.get("total", 0) > 0 and fuzzy.get("mode") == "fuzzy",
+            f"{fuzzy.get('total')} 条 / {fuzzy.get('mode')}")
+    c.check("返回 term_groups 供前端解释命中原因",
+            any("信息工程学院" in g.get("added", []) for g in fuzzy.get("term_groups", [])),
+            str(fuzzy.get("term_groups")))
+    exact = client.get("/api/search", params={"q": "信息工程学院"}).json()
+    c.check("直接敲全称不被降级（mode=fts、无扩展说明）",
+            exact.get("mode") == "fts" and not exact.get("term_groups"),
+            f"{exact.get('mode')} / {exact.get('term_groups')}")
+    c.check("/api/config 报告词表可用",
+            cfg.get("fuzzy", {}).get("available") is True, str(cfg.get("fuzzy")))
+
+    # ---------------- 10. 详情（需求十四） ---------------- #
     rid = base["items"][0]["id"]
     detail = client.get(f"/api/record/{rid}")
     c.check("GET /api/record/{id} 返回 200", detail.status_code == 200, str(detail.status_code))
@@ -208,7 +225,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     c.check("列表项带 image_local_url 与 source_url",
             all(i.get("image_local_url") and i.get("source_url") for i in base["items"]))
 
-    # ---------------- 10. 统计（需求十五） ---------------- #
+    # ---------------- 11. 统计（需求十五） ---------------- #
     st = client.get("/api/stats").json()
     c.check("统计含概览 summary",
             all(k in st["summary"] for k in ("records", "images", "provinces", "colleges", "cities")),
@@ -228,7 +245,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             bool(st.get("degree_level")) and bool(st.get("fill_rate")),
             str(st.get("degree_level")))
 
-    # ---------------- 11. 补全 / 分面独立接口 ---------------- #
+    # ---------------- 12. 补全 / 分面独立接口 ---------------- #
     sug = client.get("/api/suggest").json()
     c.check("/api/suggest 覆盖省份/学院/专业",
             all(sug.get(k) for k in ("provinces", "colleges", "majors")),
@@ -236,7 +253,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     fc = client.get("/api/facets", params={"q": top}).json()
     c.check("/api/facets 支持关键词过滤", "facets" in fc and fc["facets"]["province"])
 
-    # ---------------- 12. 静态资源 ---------------- #
+    # ---------------- 13. 静态资源 ---------------- #
     c.check("GET / 返回前端页面", client.get("/").status_code == 200 and
             "选调生" in client.get("/").text, "index.html")
     c.check("GET /detail.html 可用", client.get("/detail.html").status_code == 200)

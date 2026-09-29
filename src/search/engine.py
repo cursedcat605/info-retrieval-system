@@ -32,6 +32,7 @@ from ..nlp import pinyin as pinyin_util
 from ..utils.config import get
 from ..utils.logger import get_logger
 from ..utils.text import shorten_region, unique_keep_order
+from . import fuzzy as fuzzy_util
 from . import highlight as highlight_util
 
 logger = get_logger("search")
@@ -138,6 +139,67 @@ def _sort_options() -> List[Dict[str, str]]:
     ]
 
 
+def _page_by_ids(
+    conn: sqlite3.Connection,
+    ids: Sequence[int],
+    filters: Mapping[str, List[str]],
+    sort: str,
+    size: int,
+    offset: int,
+) -> List[Dict[str, Any]]:
+    """按给定 id 顺序取一页结果。
+
+    ``sort="relevance"`` 时**保留传入的 id 顺序**（调用方已按命中程度排好），
+    只借用 SQL 把行取出来；其余排序方式交给 SQL。
+    """
+    if sort != "relevance":
+        result = _db_search(
+            conn, "", filters=filters, record_ids=ids,
+            sort=sort, limit=size, offset=offset,
+        )
+        return result["items"]
+
+    page_ids = list(ids)[offset: offset + size]
+    if not page_ids:
+        return []
+    found = _db_search(
+        conn, "", filters=filters, record_ids=page_ids,
+        sort="confidence_desc", limit=len(page_ids), offset=0,
+    )
+    by_id = {row["id"]: row for row in found["items"]}
+    return [by_id[rid] for rid in page_ids if rid in by_id]
+
+
+def _fuzzy_supplement(
+    conn: sqlite3.Connection,
+    base: str,
+    search_terms: Sequence[str],
+    filters: Mapping[str, List[str]],
+) -> Optional[Tuple[List[int], List[Dict[str, Any]]]]:
+    """模糊匹配的候选集：**原词精确命中在前，词表别名的命中补在后**（去重）。
+
+    返回 ``(id 列表, 逐词命中数)``；若词表别名一条新记录都没带来，则返回 ``None``，
+    让调用方继续走原来的单关键词快路径 —— 这样搜「信息工程学院」这类正式写法时
+    行为与从前完全一致（仍是 FTS + bm25 相关度排序），不会有任何回退。
+    """
+    exact = _match_ids(conn, base, filters=filters, limit=_TERM_CANDIDATE_LIMIT)
+    seen = set(exact)
+    extra: List[int] = []
+    counts: List[Dict[str, Any]] = [{"term": base, "total": len(exact)}]
+    for variant in search_terms:
+        if variant == base:
+            continue
+        ids = _match_ids(conn, variant, filters=filters, limit=_TERM_CANDIDATE_LIMIT)
+        counts.append({"term": variant, "total": len(ids)})
+        for rid in ids:
+            if rid not in seen:
+                seen.add(rid)
+                extra.append(rid)
+    if not extra:
+        return None
+    return exact + extra, counts
+
+
 def query(
     conn: sqlite3.Connection,
     query: str = "",
@@ -155,11 +217,28 @@ def query(
     :param filters: 多选筛选，同维度 OR、跨维度 AND。
     :param sort: 见 :data:`SORT_LABELS`；留空时“有查询词→相关度，否则→默认届别倒序”。
     :param page: 页码，从 1 开始。
-    :return: ``{"query", "terms", "mode", "total", "page", "pages", "items",
-        "facets", "filter_tags", "dimensions", "sort_options", "groups"}``
+
+    模糊匹配：用户词会先经 :mod:`src.search.fuzzy`（词表 ``config/fuzzy_terms.yaml``）
+    扩展成等价写法，因此搜「信工」也能命中库里写的「信息工程学院」。
+    扩展只发生在**词**这一层，后续仍走常规检索路径，所以高亮/分面/筛选行为不变。
+
+    :return: ``{"query", "terms", "search_terms", "term_groups", "mode", "total",
+        "page", "pages", "items", "facets", "filter_tags", "dimensions",
+        "sort_options", "groups"}``；其中 ``terms`` 是用户原词，``search_terms``
+        是真正拿去检索的词，``term_groups`` 只含「被扩展过」的词（供前端解释命中原因）。
     """
     terms = parse_query(query)
     active = parse_filters(filters)
+
+    # 模糊匹配：把「信工」扩展成「信工 + 信息工程学院 + 信工院」。
+    # 扩展只发生在「词」这一层，扩展出的词仍然走原有检索路径，
+    # 所以高亮、分面、筛选、排序都不需要改 SQL。
+    expanded = fuzzy_util.expand_terms(terms)
+    search_terms = unique_keep_order(
+        variant for group in expanded for variant in group["variants"]
+    )
+    # 只把「真被扩展过」的词留给前端做解释；别名没带来新记录时会被清空
+    term_groups = [group for group in expanded if group["added"]]
 
     try:
         page_number = max(1, int(page or 1))
@@ -172,31 +251,63 @@ def query(
     size = max(1, min(size, MAX_PAGE_SIZE))
     offset = (page_number - 1) * size
 
-    resolved_sort = (sort or "").strip() or ("relevance" if terms else DEFAULT_SORT)
+    resolved_sort = (
+        (sort or "").strip() or ("relevance" if search_terms else DEFAULT_SORT)
+    )
 
-    keyword = terms[0] if len(terms) == 1 else ""
+    keyword = ""
     groups: List[Dict[str, Any]] = []
     candidate_ids: Optional[List[int]] = None
     mode = "all"
 
+    # 注意：这里判断的是**用户词个数**（terms），不是扩展后的 search_terms。
+    # 一个用户词经词表扩展后可能变成好几个词，但语义上仍是「单关键词检索」，
+    # 应该走下面的「原词精确优先 + 模糊补充」而不是多词 AND/OR 分支。
     if len(terms) <= 1:
-        result = _db_search(
-            conn, keyword, filters=active, sort=resolved_sort,
-            limit=size, offset=offset,
-        )
-        total = int(result["total"])
-        items = result["items"]
-        mode = result["mode"]
+        base = terms[0] if terms else ""
+        fuzzy_hits: Optional[Tuple[List[int], List[Dict[str, Any]]]] = None
+        if base and term_groups:
+            # 模糊匹配：原词精确命中优先，词表别名的命中补在后面。
+            # 别名没带来新记录时返回 None → 退回原本的单关键词快路径。
+            fuzzy_hits = _fuzzy_supplement(conn, base, search_terms, active)
+        if fuzzy_hits is None:
+            keyword = base
+            result = _db_search(
+                conn, base, filters=active, sort=resolved_sort,
+                limit=size, offset=offset,
+            )
+            total = int(result["total"])
+            items = result["items"]
+            mode = result["mode"]
+            # 别名一条新记录都没带来（如直接搜「信息工程学院」），
+            # 结果与精确匹配完全一致 → 清掉扩展说明，前端不必解释「为什么命中」
+            term_groups = []
+        else:
+            mode = "fuzzy"
+            candidate_ids, groups = fuzzy_hits
+            total = len(candidate_ids)
+            items = _page_by_ids(conn, candidate_ids, active, resolved_sort, size, offset)
     else:
-        # 多关键词：逐词各取一批候选，再按“全命中优先”组合
-        per_term_ids: List[List[int]] = []
-        for term in terms:
-            ids = _match_ids(conn, term, filters=active, limit=_TERM_CANDIDATE_LIMIT)
-            per_term_ids.append(ids)
-            groups.append({"term": term, "total": len(ids)})
+        # 多个用户词：**先让每个用户词把自己的等价写法并成一个候选集**（组内 OR），
+        # 再在组之间做「全组命中优先，否则放宽为或」。
+        # 不能在「词」这一层直接求交：扩展出来的别名往往一条都命中不了
+        # （如「信工 选调」里的「信工院」），那样交集会永远为空并被误判成「或」。
+        per_term_sets: List[set] = []
+        for group in expanded:
+            ids: List[int] = []
+            seen: set = set()
+            for variant in group["variants"]:
+                found = _match_ids(
+                    conn, variant, filters=active, limit=_TERM_CANDIDATE_LIMIT
+                )
+                for rid in found:
+                    if rid not in seen:
+                        seen.add(rid)
+                        ids.append(rid)
+            per_term_sets.append(set(ids))
+            groups.append({"term": group["term"], "total": len(ids)})
 
-        sets = [set(ids) for ids in per_term_ids]
-        common = set.intersection(*sets) if sets else set()
+        common = set.intersection(*per_term_sets) if per_term_sets else set()
         if common:
             mode = "and"
             candidate_ids = sorted(common)
@@ -209,40 +320,27 @@ def query(
         else:
             mode = "or"
             hits: Dict[int, int] = {}
-            for ids in per_term_ids:
+            for ids in per_term_sets:
                 for rid in ids:
                     hits[rid] = hits.get(rid, 0) + 1
             candidate_ids = sorted(hits, key=lambda rid: (-hits[rid], rid))
             total = len(candidate_ids)
-            if resolved_sort == "relevance":
-                page_ids = candidate_ids[offset: offset + size]
-                items = []
-                if page_ids:
-                    found = _db_search(
-                        conn, "", filters=active, record_ids=page_ids,
-                        sort="confidence_desc", limit=len(page_ids), offset=0,
-                    )
-                    by_id = {row["id"]: row for row in found["items"]}
-                    items = [by_id[rid] for rid in page_ids if rid in by_id]
-            else:
-                result = _db_search(
-                    conn, "", filters=active, record_ids=candidate_ids,
-                    sort=resolved_sort, limit=size, offset=offset,
-                )
-                items = result["items"]
+            items = _page_by_ids(conn, candidate_ids, active, resolved_sort, size, offset)
 
     facet_data: Dict[str, List[Dict[str, Any]]] = {}
     if with_facets:
-        if len(terms) <= 1:
+        if candidate_ids is None:
             facet_data = _facet_counts(conn, keyword, filters=active)
         else:
             facet_data = _facet_counts(
                 conn, "", filters=active, record_ids=candidate_ids
             )
 
+    # 高亮用的是「真正拿去检索的词」，命中「信息工程学院」时就会标在学院字段上；
+    # 用户敲的原词（信工）不参与高亮 —— 库里根本没有这两个字，标不出来。
     if with_highlight:
         for item in items:
-            item["highlight"] = highlight_util.build(item, terms)
+            item["highlight"] = highlight_util.build(item, search_terms)
     else:
         for item in items:
             item["highlight"] = {
@@ -257,6 +355,9 @@ def query(
     return {
         "query": query,
         "terms": terms,
+        "search_terms": search_terms,
+        "term_groups": term_groups,
+        "fuzzy": fuzzy_util.summary(),
         "mode": mode,
         "total": total,
         "page": page_number,
@@ -299,7 +400,11 @@ def get_detail(
 
 
 def suggestions(conn: sqlite3.Connection) -> Dict[str, Any]:
-    """给搜索框的自动补全用：返回已有省份/城市/学院/专业候选词。"""
+    """给搜索框的自动补全用：返回已有省份/城市/学院/专业候选词。
+
+    额外附带模糊匹配词表的别名（``aliases``），这样用户刚敲「信工」就能在
+    下拉里看到「信工 → 信息工程学院」，不用先猜库里的正式写法。
+    """
     data = _facets(conn)
     return {
         "provinces": [f["value"] for f in data.get("province", [])],
@@ -307,7 +412,9 @@ def suggestions(conn: sqlite3.Connection) -> Dict[str, Any]:
         "colleges": [f["value"] for f in data.get("college", [])],
         "majors": [f["value"] for f in data.get("major", [])],
         "cohorts": [f["value"] for f in data.get("cohort_year", [])],
+        "aliases": fuzzy_util.alias_pairs(),
         "pinyin": pinyin_util.available(),
+        "fuzzy": fuzzy_util.summary(),
     }
 
 
@@ -322,3 +429,4 @@ __all__ = [
     "query",
     "suggestions",
 ]
+

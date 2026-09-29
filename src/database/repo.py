@@ -589,6 +589,10 @@ def facet_counts(
 def stats(conn: sqlite3.Connection) -> Dict[str, Any]:
     """整体数据概览：图片数、记录数、各核心字段填充率。"""
     images = conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+    latest_release_time = conn.execute(
+        "SELECT MAX(release_time) FROM images "
+        "WHERE COALESCE(release_time, '') != ''"
+    ).fetchone()[0]
     records = conn.execute("SELECT COUNT(*) FROM selects_records").fetchone()[0]
     rows = conn.execute("SELECT * FROM selects_records").fetchall()
     fill: Dict[str, float] = {}
@@ -606,6 +610,7 @@ def stats(conn: sqlite3.Connection) -> Dict[str, Any]:
     return {
         "images": int(images),
         "records": int(records),
+        "latest_release_time": latest_release_time,
         "empty_records": int(empty),
         "fill_rate": fill,
     }
@@ -641,17 +646,17 @@ def stats_overview(conn: sqlite3.Connection, top_n: int = 15) -> Dict[str, Any]:
             "cities": len(group("city")),
             "cohorts": len(group("cohort_year")),
         },
-        # 15.1 省份分布（柱状图）
+        # 省份分布（横向柱状图）
         "province": to_list(group("province", limit=top_n)),
-        # 15.2 届别趋势（折线图，按年份升序）
+        # 届别趋势（折线图，按年份升序）
         "cohort": to_list(group("cohort_year", ascending=True)),
-        # 15.3 岗位类别（饼图）
+        # 岗位类别（饼图）
         "position_category": to_list(group("position_category")),
-        # 15.4 学院分布（横向柱状图）
+        # 学院分布（横向柱状图）
         "college": to_list(group("college", limit=top_n)),
-        # 附加：学历层次
+        # 学历层次
         "degree_level": to_list(group("degree_level")),
-        # 附加：去向城市 TOP N
+        # 去向城市 TOP N
         "city": to_list(group("city", limit=top_n)),
         "fill_rate": overview["fill_rate"],
     }

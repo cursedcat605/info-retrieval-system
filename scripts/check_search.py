@@ -182,7 +182,23 @@ def main() -> int:
         c.check("多关键词模式可判定", multi["mode"] in ("and", "or"), multi["mode"])
         c.check("首词命中数 > 0", multi["groups"][0]["total"] > 0 or not inits)
 
-    # ---------- 8. 详情 ----------
+    # ---------- 8. 模糊匹配（人工维护的词表 config/fuzzy_terms.yaml） ----------
+    for alias, canonical in (("信工", "信息工程学院"), ("民社", "民族学与社会学学院")):
+        fuzzy = query(conn, alias, page_size=5)
+        c.check(f"「{alias}」被词表扩展为「{canonical}」",
+                canonical in fuzzy["search_terms"], fuzzy["search_terms"])
+        c.check(f"「{alias}」命中且记为 fuzzy 模式",
+                fuzzy["total"] > 0 and fuzzy["mode"] == "fuzzy",
+                f"{fuzzy['total']} 条 / {fuzzy['mode']}")
+        c.check(f"「{alias}」把扩展词交给前端解释",
+                any(canonical in g["added"] for g in fuzzy["term_groups"]),
+                fuzzy["term_groups"])
+    exact = query(conn, "信息工程学院", page_size=5)
+    c.check("直接敲全称仍走原路径（mode / 结果不被降级）",
+            exact["mode"] == "fts" and exact["term_groups"] == [],
+            f"{exact['mode']} / {exact['term_groups']}")
+
+    # ---------- 9. 详情 ----------
     rid = base["items"][0]["id"]
     detail = get_detail(conn, rid)
     c.check("详情页返回记录", detail is not None and detail["id"] == rid)
@@ -191,7 +207,7 @@ def main() -> int:
         c.check("详情页含字段中文名", bool(detail["field_labels"]))
     c.check("不存在的记录返回 None", get_detail(conn, -1) is None)
 
-    # ---------- 9. 统计 ----------
+    # ---------- 10. 统计 ----------
     overview = stats_overview(conn)
     c.check("统计含省份分布", bool(overview["province"]), overview["summary"])
     c.check("统计含届别趋势（升序）", bool(overview["cohort"]),
@@ -201,7 +217,7 @@ def main() -> int:
     c.check("统计含学院分布", bool(overview["college"]), overview["college"][:3])
     c.check("统计含学历层次", bool(overview["degree_level"]), overview["degree_level"])
 
-    # ---------- 10. 其它接口 ----------
+    # ---------- 11. 其它接口 ----------
     sug = suggestions(conn)
     c.check("自动补全覆盖省份/学院/专业", all(sug[k] for k in ("provinces", "colleges", "majors")))
     ids = match_ids(conn, "", limit=10)

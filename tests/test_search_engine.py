@@ -242,6 +242,104 @@ def test_multi_keyword_reports_groups(conn):
 
 
 # --------------------------------------------------------------------------- #
+# 模糊匹配（config/fuzzy_terms.yaml + src/search/fuzzy.py）
+# --------------------------------------------------------------------------- #
+#: 词表里保证存在的例子：搜简写「信工」要命中库中写的「信息工程学院」
+FUZZY_ALIAS = "信工"
+FUZZY_CANONICAL = "信息工程学院"
+
+
+def test_fuzzy_terms_are_loaded(conn):
+    result = engine.query(conn, FUZZY_ALIAS)
+    assert result["search_terms"][0] == FUZZY_ALIAS          # 用户原词永远排第一
+    assert FUZZY_CANONICAL in result["search_terms"]        # 扩展出了库里的写法
+
+
+def test_fuzzy_alias_finds_canonical_records(conn):
+    fuzzy = engine.query(conn, FUZZY_ALIAS)
+    canonical = engine.query(conn, FUZZY_CANONICAL)
+    assert fuzzy["total"] > 0
+    assert fuzzy["mode"] == "fuzzy"
+    # 简写与全称命中同一批记录
+    assert fuzzy["total"] == canonical["total"]
+    assert {i["id"] for i in fuzzy["items"]} <= {i["id"] for i in canonical["items"]}
+    assert all(i["college"] == FUZZY_CANONICAL for i in fuzzy["items"])
+
+
+def test_fuzzy_expansion_is_explained_to_frontend(conn):
+    groups = engine.query(conn, FUZZY_ALIAS)["term_groups"]
+    assert len(groups) == 1
+    assert groups[0]["term"] == FUZZY_ALIAS
+    assert FUZZY_CANONICAL in groups[0]["added"]
+    assert groups[0]["variants"][0] == FUZZY_ALIAS
+
+
+def test_exact_canonical_query_stays_on_fast_path(conn):
+    """直接敲正式写法时行为不能变：仍是 FTS + bm25，也不展示扩展说明。"""
+    result = engine.query(conn, FUZZY_CANONICAL)
+    assert result["mode"] == "fts"
+    assert result["term_groups"] == []
+
+
+def test_unknown_term_is_not_expanded(conn):
+    result = engine.query(conn, "这个词词表里绝对没有")
+    assert result["search_terms"] == ["这个词词表里绝对没有"]
+    assert result["term_groups"] == []
+    assert result["mode"] in ("fts", "like", "all")
+
+
+def test_fuzzy_highlights_the_canonical_spelling(conn):
+    """高亮必须落在库里的汉字上（而不是「信工」这两个字）。"""
+    result = engine.query(conn, FUZZY_ALIAS)
+    marks = [v for i in result["items"]
+             for v in i["highlight"]["fields"].values()
+             if highlight_util.MARK_OPEN in v]
+    assert marks
+    assert all(FUZZY_CANONICAL in m for m in marks)
+
+
+def test_fuzzy_facets_cover_only_the_expanded_hits(conn):
+    result = engine.query(conn, FUZZY_ALIAS)
+    college = [f for f in result["facets"]["college"] if f["value"] == FUZZY_CANONICAL]
+    assert college and college[0]["count"] == result["total"]
+
+
+def test_fuzzy_filters_apply_to_expanded_hits(conn):
+    base = engine.query(conn, FUZZY_ALIAS)
+    province = base["items"][0]["province"]
+    narrowed = engine.query(conn, FUZZY_ALIAS, filters={"province": province})
+    assert narrowed["mode"] == "fuzzy"
+    assert 0 < narrowed["total"] <= base["total"]
+    assert all(i["province"] == province for i in narrowed["items"])
+
+
+def test_fuzzy_alias_with_second_keyword_keeps_and_semantics(conn):
+    """「信工 选调」不能在词这一层求交：扩展出的「信工院」零命中会把交集打穿。"""
+    result = engine.query(conn, f"{FUZZY_ALIAS} 选调")
+    assert result["mode"] == "and"
+    assert len(result["groups"]) == 2                      # 两个用户词 → 两组
+    assert result["groups"][0]["term"] == FUZZY_ALIAS      # 组内是并集后的命中数
+    assert result["total"] > 0
+
+
+def test_fuzzy_pagination_is_stable(conn):
+    total = engine.query(conn, FUZZY_ALIAS)["total"]
+    if total < 2:
+        pytest.skip("命中数太少，无法比较分页")
+    first = engine.query(conn, FUZZY_ALIAS, page_size=1)
+    second = engine.query(conn, FUZZY_ALIAS, page=2, page_size=1)
+    assert first["items"][0]["id"] != second["items"][0]["id"]
+    assert first["total"] == second["total"] == total
+
+
+def test_suggestions_expose_alias_pairs(conn):
+    data = engine.suggestions(conn)
+    pairs = {(p["alias"], p["canonical"]) for p in data["aliases"]}
+    assert (FUZZY_ALIAS, FUZZY_CANONICAL) in pairs
+    assert data["fuzzy"]["available"] is True
+
+
+# --------------------------------------------------------------------------- #
 # 高亮（需求十二）
 # --------------------------------------------------------------------------- #
 def test_every_item_has_highlight(conn):
