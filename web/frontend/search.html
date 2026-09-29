@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多维筛选 · 远帆 · 选调生去向档案</title>
+<meta name="description" content="按省份、岗位类别、学历、届别、学院、专业、城市多维度筛选选调生去向档案。">
+<link rel="stylesheet" href="/styles.css?v=5">
+</head>
+<body data-page="search">
+
+<header class="top">
+  <div class="inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">远</span>
+      <span class="txt">
+        <span class="name">远帆 · 选调生去向档案</span>
+        <span class="sub">GRADUATE DESTINATION ARCHIVE</span>
+      </span>
+    </a>
+    <form class="quick" role="search" onsubmit="return false">
+      <input type="search" placeholder="快速查找姓名、单位或地区" aria-label="快速查找">
+      <span class="hint" aria-hidden="true">回车</span>
+      <button type="button" aria-label="检索">→</button>
+    </form>
+    <span class="stamp" data-records style="margin-left:auto"></span>
+    <nav>
+      <a href="/" class="active">检索</a>
+      <a href="/stats.html">统计分析</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="crumbs" aria-label="面包屑">
+  <a href="/">首页</a>
+  <span class="sep">/</span>
+  <span class="now">多维筛选</span>
+</nav>
+
+<div class="pagehead">
+  <h1>找到与你方向相近的选择</h1>
+  <p class="sub">输入关键词，或者从左侧逐层收窄条件 —— 省份、岗位类别、学历、届别、学院、专业、城市。</p>
+</div>
+
+<div class="layout">
+  <!-- ============================================================ 左侧筛选 -->
+  <aside class="sidebar">
+    <h2>筛选条件</h2>
+    <p class="side-note">勾选后点底部按钮应用，不会自动检索。</p>
+
+    <div id="facets"></div>
+
+    <div class="sidebar-actions">
+      <button class="btn" data-search type="button">查看结果</button>
+    </div>
+  </aside>
+
+  <!-- ============================================================ 右侧结果 -->
+  <main>
+    <form class="searchbar" id="search-form" role="search">
+      <input id="q" type="search" placeholder="姓名 / 学院 / 专业 / 单位 / 省份（支持拼音与简称）"
+             autocomplete="off" aria-label="检索关键词" aria-describedby="search-help">
+      <button class="btn" id="btn-search" data-search type="submit">检索</button>
+      <button class="help-btn js-help-open" type="button" aria-expanded="false"
+              aria-controls="search-help" title="检索与筛选说明"><span class="help-icon" aria-hidden="true">?</span><span class="sr">检索与筛选说明</span></button>
+      <div class="suggest" id="suggest" role="listbox" aria-label="输入建议"></div>
+    </form>
+
+    <div class="filter-hint" id="filter-hint" hidden></div>
+    <div class="fuzzy-hint" id="fuzzy-hint" hidden></div>
+
+    <div class="toolbar">
+      <span class="summary" id="summary"></span>
+      <span class="spacer"></span>
+      <label class="sr" for="sort">排序方式</label>
+      <select id="sort"></select>
+      <label class="sr" for="page-size">每页条数</label>
+      <select id="page-size">
+        <option value="20">20 条 / 页</option>
+        <option value="50">50 条 / 页</option>
+        <option value="100">100 条 / 页</option>
+      </select>
+      <div class="viewswitch" id="viewswitch" role="group" aria-label="视图切换">
+        <button type="button" data-view="card" class="active">卡片</button>
+        <button type="button" data-view="table">表格</button>
+      </div>
+    </div>
+
+    <div class="tagbar" id="tagbar"></div>
+
+    <div id="results"></div>
+    <!-- 注意：样式都挂在 .pager 上，class 不能省（少了它就是浏览器默认按钮） -->
+    <div id="pager" class="pager"></div>
+  </main>
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <span class="proj">远帆 · 选调生去向档案</span>
+    <span>数据来源：门户公开通知公告（OCR + 字段抽取）</span>
+    <span class="spacer"></span>
+    <a href="/">首页</a>
+    <a href="/stats.html">统计分析</a>
+  </div>
+</footer>
+
+<div class="help-overlay" id="search-help" hidden>
+  <section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="search-help-title" tabindex="-1">
+    <button class="help-close" type="button" aria-label="关闭说明">×</button>
+    <div class="help-kicker">SEARCH GUIDE</div>
+    <h2 id="search-help-title">检索与多维筛选说明</h2>
+    <p class="help-intro">从关键词快速定位档案，也可以逐步组合筛选条件。</p>
+    <div class="help-columns">
+      <section><h3><span>01</span> 关键词检索</h3>
+        <ul>
+          <li><b>支持字段</b>：姓名、学院、专业、届别、学历、省份、城市、单位与岗位方向。</li>
+          <li><b>拼音与简称</b>：支持姓名全拼、首字母和维护过的简称，例如“信工”。</li>
+          <li><b>多个词</b>：用空格、逗号、顿号、<kbd>+</kbd> 或 <kbd>|</kbd> 分隔。系统优先同时匹配，暂无结果时会放宽匹配。</li>
+          <li><b>搜索建议</b>：输入后可用 ↑ ↓ 选择建议，回车确认；检索结果中的高亮会说明命中的词。</li>
+        </ul>
+      </section>
+      <section><h3><span>02</span> 多维筛选</h3>
+        <ul>
+          <li>在左侧展开省份、岗位类别、学历、届别、学院、专业或城市，勾选一个或多个选项。</li>
+          <li><b>同一维度</b>内多选按“满足任一项”匹配；<b>不同维度</b>之间按“同时满足”组合。</li>
+          <li>勾选后点击左侧“查看结果”应用。顶部条件标签可单独移除，也可清空全部条件。</li>
+          <li>可调整排序、每页条数，并在卡片与表格视图之间切换。</li>
+        </ul>
+      </section>
+    </div>
+    <p class="help-note">信息来自学校及相关单位公开发布内容，字段由 OCR 辅助整理，个别记录可能缺失或有误。</p>
+    <button class="help-done" type="button">知道了</button>
+  </section>
+</div>
+
+<script src="/common.js?v=5"></script>
+<script src="/app.js?v=5"></script>
+</body>
+</html>

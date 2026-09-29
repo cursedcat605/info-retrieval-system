@@ -1,66 +1,102 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>记录详情 · 选调生去向信息检索系统</title>
-<link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>档案详情 · 远帆 · 选调生去向档案</title>
+<meta name="description" content="选调生去向档案详情：基本信息、选调去向与来源信息，并可直接查看通知公告原图。">
+<link rel="stylesheet" href="/styles.css?v=5">
 </head>
-<body>
+<body data-page="detail">
 
-<header class="topbar">
-  <div class="brand"><span class="logo">选</span><span>选调生去向信息检索</span></div>
-  <nav>
-    <a href="/">检索</a>
-    <a href="/stats.html">统计分析</a>
-  </nav>
+<header class="top">
+  <div class="inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">远</span>
+      <span class="txt">
+        <span class="name">远帆 · 选调生去向档案</span>
+        <span class="sub">GRADUATE DESTINATION ARCHIVE</span>
+      </span>
+    </a>
+    <form class="quick" role="search" onsubmit="return false">
+      <input type="search" placeholder="快速查找姓名、单位或地区" aria-label="快速查找">
+      <span class="hint" aria-hidden="true">回车</span>
+      <button type="button" aria-label="检索">→</button>
+    </form>
+    <span class="stamp" data-records style="margin-left:auto"></span>
+    <nav>
+      <a href="/">检索</a>
+      <a href="/stats.html">统计分析</a>
+    </nav>
+  </div>
 </header>
 
-<div class="pagehead">
-  <h1 id="detail-title">记录详情</h1>
-  <div class="sub" id="detail-sub">加载中…</div>
-  <div class="actions">
-    <button class="btn ghost" id="btn-back">‹ 返回检索结果</button>
-    <a class="btn" id="btn-source" href="#" target="_blank" rel="noopener">查看原文 ↗</a>
-    <a class="btn ghost" id="btn-image" href="#" target="_blank" rel="noopener">查看原始图片 ↗</a>
+<nav class="crumbs" aria-label="面包屑">
+  <a href="/">首页</a>
+  <span class="sep">/</span>
+  <a href="/search.html">多维筛选</a>
+  <span class="sep">/</span>
+  <span class="now">档案详情</span>
+</nav>
+
+<div id="detail-root">
+  <div class="hero-profile" id="detail-hero" aria-live="polite"></div>
+
+  <!-- ============================================ 左：字段 / 右：来源与原图 -->
+  <div class="detail-main" id="detail-main">
+    <div class="detail-facts">
+      <section class="panel" id="col-basic">
+        <h3>基本信息<span class="tail">BASIC</span></h3>
+        <dl class="kv cols-2" id="basic-grid"></dl>
+      </section>
+
+      <section class="panel" id="col-selects">
+        <h3>选调去向<span class="tail">DESTINATION</span></h3>
+        <dl class="kv cols-2" id="selects-grid"></dl>
+      </section>
+
+      <section class="panel" id="evidence-panel">
+        <h3>识别依据<span class="tail">EVIDENCE</span></h3>
+        <div class="evidence" id="evidence-body"></div>
+        <p class="meta-note">以上字段由该条通知公告的公开内容抽取，可对照原图逐项核对。</p>
+      </section>
+    </div>
+
+    <div class="detail-source">
+      <section class="panel" id="col-source">
+        <h3>来源信息<span class="tail">SOURCE</span></h3>
+        <dl class="kv" id="source-grid"></dl>
+      </section>
+
+      <section class="panel detail-image">
+        <h3>通知原图<span class="tail">ORIGINAL</span></h3>
+        <div class="thumb-frame">
+          <img id="image-thumb" alt="通知公告原图" loading="lazy">
+          <p class="ph" id="image-ph">暂无原图</p>
+        </div>
+        <div class="zoom">
+          <a class="mini primary" id="image-link" href="#" target="_blank" rel="noopener">查看原图 ↗</a>
+        </div>
+        <p class="meta-note" id="image-note"></p>
+      </section>
+    </div>
   </div>
+
+  <div class="detail-actions" id="detail-actions"></div>
 </div>
 
-<!-- 需求十四：字段区（左）+ 原图区（右，宽屏下跟随滚动吸附） -->
-<div class="detail-main" id="detail-main" hidden>
-  <div class="detail-facts">
-    <section class="panel">
-      <h3>基本信息</h3>
-      <dl class="kv" id="col-basic"></dl>
-    </section>
-    <section class="panel">
-      <h3>选调生信息</h3>
-      <dl class="kv" id="col-selects"></dl>
-    </section>
-    <section class="panel">
-      <h3>来源信息</h3>
-      <dl class="kv" id="col-source"></dl>
-    </section>
+<footer class="footer">
+  <div class="inner">
+    <span class="proj">远帆 · 选调生去向档案</span>
+    <span>数据来源：门户公开通知公告（OCR + 字段抽取）</span>
+    <span class="spacer"></span>
+    <a href="/">首页</a>
+    <a href="/search.html">多维筛选</a>
+    <a href="/stats.html">统计分析</a>
   </div>
+</footer>
 
-  <section class="panel detail-image">
-    <h3>原始图片</h3>
-    <a id="image-link" class="zoom" href="#" target="_blank" rel="noopener" title="点击查看原图">
-      <img class="thumb" id="image-thumb" alt="原始通知图片" />
-    </a>
-    <div class="meta-note" id="image-note"></div>
-  </section>
-</div>
-
-<div class="section">
-  <section class="panel">
-    <h3>识别证据（原文出处，用于人工核对与可信度评估）</h3>
-    <div class="evidence" id="evidence">—</div>
-    <div class="meta-note" id="evidence-note"></div>
-  </section>
-</div>
-
-<script src="/common.js"></script>
-<script src="/detail.js"></script>
+<script src="/common.js?v=5"></script>
+<script src="/detail.js?v=5"></script>
 </body>
 </html>

@@ -1,77 +1,114 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>统计分析 · 选调生去向信息检索系统</title>
-<link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>统计分析 · 远帆 · 选调生去向档案</title>
+<meta name="description" content="选调生去向的整体分布：届别趋势、去向省份、岗位类别、学历层次、学院与城市分布。">
+<link rel="stylesheet" href="/styles.css?v=5">
 </head>
-<body>
+<body data-page="stats">
 
-<header class="topbar">
-  <div class="brand"><span class="logo">选</span><span>选调生去向信息检索</span></div>
-  <nav>
-    <a href="/">检索</a>
-    <a href="/stats.html" class="active">统计分析</a>
-  </nav>
+<header class="top">
+  <div class="inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">远</span>
+      <span class="txt">
+        <span class="name">远帆 · 选调生去向档案</span>
+        <span class="sub">GRADUATE DESTINATION ARCHIVE</span>
+      </span>
+    </a>
+    <form class="quick" role="search" onsubmit="return false">
+      <input type="search" placeholder="快速查找姓名、单位或地区" aria-label="快速查找">
+      <span class="hint" aria-hidden="true">回车</span>
+      <button type="button" aria-label="检索">→</button>
+    </form>
+    <span class="stamp" data-records style="margin-left:auto"></span>
+    <nav>
+      <a href="/">检索</a>
+      <a href="/stats.html" class="active">统计分析</a>
+    </nav>
+  </div>
 </header>
 
+<nav class="crumbs" aria-label="面包屑">
+  <a href="/">首页</a>
+  <span class="sep">/</span>
+  <span class="now">统计分析</span>
+</nav>
+
 <div class="pagehead">
-  <h1>统计分析</h1>
-  <div class="sub" id="stats-sub">加载中…</div>
+  <h1>看看整体去向的轮廓</h1>
+  <p class="sub">把库里的公开通知公告汇总成分布：去了哪些省份、什么岗位，哪些学院与城市出现得最多。</p>
 </div>
 
-<div class="kpis" id="kpis"></div>
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
 
-<div class="charts">
-  <section class="chart wide">
-    <h3>15.1 省份分布</h3>
-    <div class="hint">按去向省份统计的记录数（柱状图，取 TOP 15）</div>
-    <div class="canvas" id="chart-province"></div>
-  </section>
+  <div class="charts">
+    <section class="chart wide">
+      <h3>届别趋势</h3>
+      <p class="hint">每年的收录条数，用来观察数据的年度覆盖情况（非当年真实录取总量）。</p>
+      <div class="canvas" id="chart-cohort"></div>
+      <div class="fallback-list" id="fallback-cohort" hidden></div>
+    </section>
 
-  <section class="chart">
-    <h3>15.2 届别趋势</h3>
-    <div class="hint">各届别（毕业年份）人数变化（折线图，按年份升序）</div>
-    <div class="canvas" id="chart-cohort"></div>
-  </section>
+    <section class="chart">
+      <h3>去向省份 TOP 15</h3>
+      <p class="hint">按记录条数排序，横向条形越长的省份出现越多。</p>
+      <div class="canvas" id="chart-province"></div>
+      <div class="fallback-list" id="fallback-province" hidden></div>
+    </section>
 
-  <section class="chart">
-    <h3>15.3 岗位类别</h3>
-    <div class="hint">岗位归一化类别占比（饼图）</div>
-    <div class="canvas" id="chart-category"></div>
-  </section>
+    <section class="chart">
+      <h3>岗位类别</h3>
+      <p class="hint">按岗位划定的方向分类，占比体现不同系统的收录结构。</p>
+      <div class="canvas short" id="chart-position"></div>
+      <div class="fallback-list" id="fallback-position" hidden></div>
+    </section>
 
-  <section class="chart wide">
-    <h3>15.4 学院分布</h3>
-    <div class="hint">输出选调生的学院排名（横向柱状图，取 TOP 15）</div>
-    <div class="canvas" id="chart-college"></div>
-  </section>
+    <section class="chart">
+      <h3>学历层次</h3>
+      <p class="hint">本科 / 硕士 / 博士等去向记录的构成比例。</p>
+      <div class="canvas short" id="chart-degree"></div>
+      <div class="fallback-list" id="fallback-degree" hidden></div>
+    </section>
 
-  <section class="chart">
-    <h3>附加：学历层次</h3>
-    <div class="hint">本科 / 硕士 / 博士占比（环形图）</div>
-    <div class="canvas" id="chart-degree"></div>
-  </section>
+    <section class="chart">
+      <h3>去向城市 TOP 15</h3>
+      <p class="hint">识别到的城市分布，通常与省份分布互相印证。</p>
+      <div class="canvas" id="chart-city"></div>
+      <div class="fallback-list" id="fallback-city" hidden></div>
+    </section>
 
-  <section class="chart">
-    <h3>附加：去向城市</h3>
-    <div class="hint">主要落位城市（横向柱状图，取 TOP 15）</div>
-    <div class="canvas" id="chart-city"></div>
-  </section>
+    <section class="chart wide">
+      <h3>学院分布 TOP 15</h3>
+      <p class="hint">记录条数最多的学院，用来判断样本集中在哪些院系。</p>
+      <div class="canvas" id="chart-college"></div>
+      <div class="fallback-list" id="fallback-college" hidden></div>
+    </section>
 
-  <section class="chart wide">
-    <h3>字段填充率</h3>
-    <div class="hint">抽取质量体检：过低说明该字段仍需优化规则</div>
-    <div class="canvas" id="chart-fill" style="height:240px;"></div>
-  </section>
+    <section class="chart wide">
+      <h3>字段填充率</h3>
+      <p class="hint">每个字段有多少比例的记录被成功识别，用来衡量数据完整度。</p>
+      <div class="bars" id="fill-bars"></div>
+    </section>
+  </div>
 </div>
 
-<!-- ECharts 由 stats.js 异步加载（带超时），CDN 不可达时自动降级为纯 CSS 条形图。
-     注意：切勿在此处以阻塞方式引入 CDN 脚本——CDN 挂起会连带阻塞 DOMContentLoaded，
-     页面会一直停在「加载中」。 -->
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-<script src="/common.js"></script>
-<script src="/stats.js"></script>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<footer class="footer">
+  <div class="inner">
+    <span class="proj">远帆 · 选调生去向档案</span>
+    <span>数据来源：门户公开通知公告（OCR + 字段抽取）</span>
+    <span class="spacer"></span>
+    <a href="/">首页</a>
+    <a href="/search.html">多维筛选</a>
+  </div>
+</footer>
+
+<script src="/common.js?v=5"></script>
+<script src="/stats.js?v=5"></script>
 </body>
 </html>

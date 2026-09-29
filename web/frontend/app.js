@@ -1,512 +1,705 @@
-/* =========================================================================
-   检索主页面逻辑（需求十 / 十一 / 十二 / 十三）
-   - 十：多条件筛选（同维度 OR、跨维度 AND、计数、标签）
-   - 十一：排序（默认届别新→旧、姓名拼音）与分页（默认 20/页）
-   - 十二：结果高亮（服务端已转义并包 <mark>，前端直接渲染）
-   - 十三：卡片视图 / 表格视图切换
-   ========================================================================= */
+/* ==========================================================================
+   检索页（filter-preview.svg 版式）
+   --------------------------------------------------------------------------
+   几条必须守住的既有行为（都踩过坑）：
+   1. ``run()`` 开头必须重新读 ``#q`` 的值。筛选、排序、翻页都可能触发 run，
+      若不重读，用户刚敲的关键词会被上一次的 state.q 覆盖 → 永远返回全部记录。
+   2. 筛选是「提交式」的：勾选框 / 移除标签只改本地 state.filters 并给出待提交
+      提示，**不自动检索**；只有点 [data-search] 或按 Enter 才 run(1)。
+   3. 分面列表每次重绘前要把各 ``<details>`` 的展开状态快照下来再还原，
+      否则 innerHTML 重建会把用户展开的组全部折叠回去（「点了没反应」的元凶）。
+   4. 勾选状态一律以本地 state.filters 为准，不看服务端返回的 option.selected，
+      否则待提交的勾选会被下次响应覆盖掉。
+   ========================================================================== */
 (function () {
-  'use strict';
-  const IRS = window.IRS;
-  const $ = (sel) => document.querySelector(sel);
+  "use strict";
 
-  const state = {
-    q: '', sort: '', page: 1, page_size: 20, view: 'card',
-    filters: {},        // {dimension: [value, ...]}
-    dimensions: [],     // [{key, label}] 由 /api/config 决定顺序
-    collapsed: true,    // 分面组是否折叠（默认展开前几个）
+  var IRS = window.IRS;
+  var $ = function (sel) { return document.querySelector(sel); };
+  var FACET_PREVIEW = 8;
+
+  var state = {
+    q: "",
+    sort: "",
+    page: 1,
+    page_size: 0,
+    view: "card",
+    filters: {},
+    lastTotal: null,         // 最近一次检索的命中数（用于侧栏按钮文案）
+    dimensions: IRS.DIMENSIONS.slice(),
+    defaultPageSize: 20,
+    maxPageSize: 100
   };
-  let dimLabels = {};
-  const expandedGroups = {};   // 记录哪些维度点了「展开更多」
 
-  /* ------------------------------------------------------------------ */
-  /* 启动                                                                */
-  /* ------------------------------------------------------------------ */
-  async function boot() {
-    try {
-      const cfg = await IRS.getJSON('/config');
-      state.dimensions = (cfg.dimensions || []).map((d) => d.key);
-      dimLabels = Object.fromEntries((cfg.dimensions || []).map((d) => [d.key, d.label]));
+  var keys = IRS.DIMENSION_KEYS.slice();
+  var groupOpen = {};        // 分面组展开状态（跨重绘保留）
+  var expandedGroups = {};   // 「展开更多」状态
+  var appliedKey = "";       // 已提交的筛选指纹
+  var lastData = null;
+  var suggestItems = [];
+  var suggestIndex = -1;
 
-      const sortSel = $('#sort');
-      sortSel.innerHTML = (cfg.sorts || [])
-        .map((s) => `<option value="${IRS.esc(s.value)}">${IRS.esc(s.label)}</option>`)
-        .join('');
-
-      const saved = IRS.readState(state.dimensions);
-      Object.assign(state, saved);
-      if (saved.page_size) $('#page-size').value = String(saved.page_size);
-      state.page_size = saved.page_size || 20;
-      if (!state.sort) state.sort = state.q ? 'relevance' : 'cohort_desc';
-      sortSel.value = state.sort;
-      $('#q').value = state.q;
-
-      syncViewSwitch();
-      bindEvents();
-      await run(1);
-      loadSuggestions();
-    } catch (err) {
-      $('#results').innerHTML = emptyBlock('系统初始化失败', err.message);
-      IRS.toast('初始化失败：' + err.message, 4000);
-    }
+  // ------------------------------------------------------------------ 工具 //
+  /** 与后端 _display_value 一致：省份去后缀、届别补「届」。 */
+  function displayValue(dim, value) {
+    if (dim === "cohort_year") return String(value) + "届";
+    if (dim === "province") return IRS.regionShort(value);
+    return String(value);
   }
 
-  function bindEvents() {
-    // 顶部搜索框旁与左侧筛选面板底部的「搜索」按钮行为一致：
-    // 都用 run(1) 回到第一页重新检索（关键词在 run() 里从 #q 读回来，
-    // 筛选条件则由 onFacetChange / onTagClick 预先写进 state.filters）。
-    // 筛选器里的勾选不会自动检索，必须由这里（或回车 / 翻页 / 改排序）提交。
-    document.querySelectorAll('[data-search]').forEach((btn) => {
-      btn.addEventListener('click', () => { toggleHelp(false); run(1); });
+  function dimLabel(dim) {
+    var found = state.dimensions.filter(function (d) { return d.key === dim; })[0];
+    return found ? found.label : dim;
+  }
+
+  function filtersKey(filters) {
+    var parts = [];
+    keys.forEach(function (dim) {
+      var values = (filters && filters[dim] ? filters[dim] : []).slice().sort();
+      if (values.length) parts.push(dim + "=" + values.join(","));
     });
-    $('#q').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { closeSuggest(); toggleHelp(false); run(1); }
-    });
-    $('#q').addEventListener('input', onTypeSuggest);
-    $('#q').addEventListener('focus', () => { if (lastSuggest) openSuggest(); });
-    $('#btn-help').addEventListener('click', () => toggleHelp());
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.searchbar')) closeSuggest();
-      // 点在其他地方就收起使用说明浮层（问号按钮与浮层内部除外）
-      if (!e.target.closest('#btn-help') && !e.target.closest('#search-help')) toggleHelp(false);
-    });
-
-    $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; run(1); });
-    $('#page-size').addEventListener('change', (e) => {
-      state.page_size = parseInt(e.target.value, 10);
-      run(1);
-    });
-    $('#viewswitch').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-view]');
-      if (!btn) return;
-      state.view = btn.dataset.view;
-      syncViewSwitch();
-      IRS.writeState(state, state.dimensions);
-      render(state.lastResult);
-    });
-    $('#tagbar').addEventListener('click', onTagClick);
-    $('#facets').addEventListener('change', onFacetChange);
-    $('#facets').addEventListener('click', onFacetClick);
-    $('#pager').addEventListener('click', onPagerClick);
+    return parts.join("&");
   }
 
-  function syncViewSwitch() {
-    document.querySelectorAll('#viewswitch button').forEach((b) => {
-      b.classList.toggle('active', b.dataset.view === state.view);
-    });
+  function selectedCount(filters) {
+    return keys.reduce(function (acc, dim) {
+      return acc + ((filters && filters[dim]) ? filters[dim].length : 0);
+    }, 0);
   }
 
-  /** 展开/收起「检索使用说明」浮层；不传参数时按当前状态取反。 */
-  function toggleHelp(show) {
-    const panel = $('#search-help');
-    const btn = $('#btn-help');
-    if (!panel || !btn) return;
-    const next = show === undefined ? panel.hidden : !!show;
-    panel.hidden = !next;
-    btn.setAttribute('aria-expanded', next ? 'true' : 'false');
-    btn.classList.toggle('active', next);
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 检索主流程                                                          */
-  /* ------------------------------------------------------------------ */
-  async function run(page) {
-    if (page) state.page = page;
-    // 搜索框是关键词的唯一真相来源：不读回来就会永远用 boot() 时的空值，
-    // 导致无论输入什么都只返回全部记录（q 根本不会出现在请求 URL 里）。
-    const qEl = $('#q');
-    if (qEl) state.q = qEl.value.trim();
-    const payload = IRS.searchParams(state, state.dimensions);
-    payload.page = state.page;
-    payload.page_size = state.page_size;
-    $('#results').classList.add('loading');
-    $('#summary').textContent = '检索中…';
-    try {
-      const data = await IRS.getJSON('/search', payload);
-      state.lastResult = data;
-      // 后端会把未知/越界页码归一化，回写保持一致
-      state.page = data.page;
-      state.sort = data.sort;
-      $('#sort').value = data.sort;
-      IRS.writeState(state, state.dimensions);
-      // 届别要补「届」、省份要去掉「省」，展示名统一从服务端拿
-      (data.filter_tags || []).forEach((t) => setFilterLabel(t.dimension, t.value, t.display));
-      // 本次请求已经用上了当前勾选的筛选条件，记下指纹用来判断「有没有未提交的改动」
-      appliedFilterKey = filtersKey();
-      renderFacets(data);
-      renderTags();
-      syncPendingUI();
-      render(data);
-      renderPager(data);
-    } catch (err) {
-      $('#summary').textContent = '检索失败';
-      $('#results').innerHTML = emptyBlock('检索失败', err.message);
-      $('#pager').innerHTML = '';
-    } finally {
-      $('#results').classList.remove('loading');
-    }
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 分面筛选面板                                                        */
-  /* ------------------------------------------------------------------ */
-  const FACET_PREVIEW = 8;
-  const groupOpen = {};   // {dim: bool} 分面组的展开状态，以 DOM 为准
-
-  /* ---------------- 筛选条件的「待提交」状态 ---------------- */
-  // 勾选筛选条件后不再立刻发请求（否则勾三项就闪三次、结果区乱跳、选中途也看不清），
-  // 只更新界面，等用户按「搜索」再统一提交。这里用筛选条件指纹判断
-  // 当前勾选与「最后一次成功检索真正用到的条件」是否一致。
-  let appliedFilterKey = '';
-  const filterLabels = {};   // {dim: {value: 展示名}}，供未提交时本地渲染「已选条件」标签
-
-  function setFilterLabel(dim, value, label) {
-    if (!filterLabels[dim]) filterLabels[dim] = {};
-    filterLabels[dim][value] = label || value;
-  }
-
-  function labelOf(dim, value) {
-    return (filterLabels[dim] || {})[value] || value;
-  }
-
-  function filtersKey() {
-    return state.dimensions
-      .map((dim) => {
-        const values = (state.filters[dim] || []).slice().sort();
-        return values.length ? dim + '=' + values.join(',') : '';
-      })
-      .filter(Boolean)
-      .join('&');
-  }
-
-  /** 未提交的筛选改动：显示提示条并高亮两个「搜索」按钮。 */
-  function syncPendingUI() {
-    const pending = filtersKey() !== appliedFilterKey;
-    const hint = $('#filter-hint');
-    if (hint) hint.hidden = !pending;
-    document.querySelectorAll('[data-search]').forEach((btn) => {
-      btn.classList.toggle('pending', pending);
-      if (pending) btn.title = '筛选条件已修改，点击此处查看新结果';
-      else btn.removeAttribute('title');
-    });
-  }
-
-  /** 只更新分组标题上的「已选 N」角标，不重建分面 DOM（否则会丢展开状态）。 */
-  function updateFacetBadges() {
-    document.querySelectorAll('#facets details.facet-group').forEach((el) => {
-      const dim = el.querySelector('.facet-options')?.dataset.dim;
-      const summary = el.querySelector('summary');
-      if (!dim || !summary) return;
-      const count = (state.filters[dim] || []).length;
-      let badge = summary.querySelector('.badge');
-      if (!count) { if (badge) badge.remove(); return; }
-      if (!badge) {
-        badge = document.createElement('span');
-        badge.className = 'badge';
-        summary.appendChild(badge);
-      }
-      badge.textContent = `已选 ${count}`;
-    });
-  }
-
-  function renderFacets(data) {
-    // 重建 DOM 会丢掉 <details> 的 open 状态。以前只用「是否有已选条件」决定是否展开，
-    // 于是用户点「展开更多」后整组立刻被折叠，看起来像按钮点了没反应。
-    // 这里在渲染前把用户当前的展开/收起状态快照下来，下一轮渲染原样还原。
-    document.querySelectorAll('#facets details.facet-group').forEach((el) => {
-      const dim = el.querySelector('.facet-options')?.dataset.dim;
-      if (dim) groupOpen[dim] = el.open;
-    });
-    const groups = state.dimensions.map((dim) => {
-      // 勾选状态一律以本地 state.filters 为准，而不是接口返回的 opt.selected：
-      // 筛选是「提交式」的，展开/收起会重渲染分面，若读服务端状态就会把
-      // 用户刚勾上、还没点「搜索」的条件还原掉。
-      const chosen = new Set(state.filters[dim] || []);
-      const options = IRS.sortOptions((data.facets[dim] || []).map((opt) => {
-        // 记住选项的展示名，这样还没提交时「已选条件」里也能显示中文标签
-        setFilterLabel(dim, opt.value, opt.label || opt.value);
-        return Object.assign({}, opt, { selected: chosen.has(opt.value) });
-      }));
-      const selectedCount = chosen.size;
-      const expanded = !!expandedGroups[dim];
-      const visible = expanded ? options : options.slice(0, FACET_PREVIEW);
-      const rows = visible.map((opt) => facetRow(dim, opt, chosen.has(opt.value))).join('');
-      const more = options.length > FACET_PREVIEW
-        ? `<button type="button" class="expand-btn" data-expand="${dim}">${expanded
-            ? '收起' : `展开更多（共 ${options.length} 项）`}</button>`
-        : '';
-      if (!options.length) return '';
-      // 首次渲染（groupOpen 里还没有该维度）：有已选条件就自动展开，否则折叠
-      const open = groupOpen[dim] !== undefined ? groupOpen[dim] : selectedCount > 0;
-      return `
-        <details class="facet-group" ${open ? 'open' : ''}>
-          <summary>${IRS.esc(dimLabels[dim] || dim)}
-            ${selectedCount ? `<span class="badge">已选 ${selectedCount}</span>` : ''}
-          </summary>
-          <div class="facet-options" data-dim="${dim}">${rows}${more}</div>
-        </details>`;
-    }).join('');
-    $('#facets').innerHTML = groups || emptyBlock('暂无可选条件', '', true);
-  }
-
-  function facetRow(dim, opt, checked) {
-    const cls = ['facet-option'];
-    if (checked) cls.push('selected');
-    if (!opt.count) cls.push('zero');
-    return `
-      <label class="${cls.join(' ')}">
-        <input type="checkbox" data-dim="${dim}" value="${IRS.esc(opt.value)}" ${checked ? 'checked' : ''} />
-        <span class="name" title="${IRS.esc(opt.value)}">${IRS.esc(opt.label || opt.value)}</span>
-        <span class="count">（${IRS.num(opt.count)}）</span>
-      </label>`;
-  }
-
-  function onFacetChange(e) {
-    const box = e.target.closest('input[type=checkbox][data-dim]');
+  // ------------------------------------------------------------ 首屏骨架 //
+  function renderFacetSkeleton() {
+    var box = $("#facets");
     if (!box) return;
-    const dim = box.dataset.dim;
-    const value = box.value;
-    const list = new Set(state.filters[dim] || []);
-    if (box.checked) list.add(value); else list.delete(value);
-    if (list.size) state.filters[dim] = Array.from(list); else delete state.filters[dim];
-    // 故意不调 run()：勾选完一批条件后由用户点「搜索」一次性提交。
-    updateFacetBadges();
-    renderTags();
-    syncPendingUI();
+    box.innerHTML = state.dimensions.map(function (dim, index) {
+      return (
+        '<details class="facet-group" data-dim="' + dim.key + '"' + (index < 3 ? " open" : "") + ">" +
+        '<summary><span class="chev" aria-hidden="true"></span>' +
+        '<span class="fname">' + IRS.esc(dim.label) + "</span>" +
+        '<span class="badge" hidden>0</span></summary>' +
+        '<div class="facet-options"><p class="meta-note">加载中…</p></div>' +
+        "</details>"
+      );
+    }).join("");
   }
 
-  function onFacetClick(e) {
-    const btn = e.target.closest('button[data-expand]');
-    if (!btn) return;
-    expandedGroups[btn.dataset.expand] = !expandedGroups[btn.dataset.expand];
-    renderFacets(state.lastResult);
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 已选条件标签（需求十：可移除标签 + 清空全部）                        */
-  /* ------------------------------------------------------------------ */
-  // 标签直接从 state.filters 渲染（不再依赖接口返回的 filter_tags），
-  // 这样勾选 / 移除的瞬间就能看到标签变化，不用等请求返回。
-  function renderTags() {
-    const tags = [];
-    state.dimensions.forEach((dim) => {
-      (state.filters[dim] || []).forEach((value) => {
-        tags.push({ dimension: dim, value: value, display: labelOf(dim, value) });
-      });
+  // -------------------------------------------------------------- 分面渲染 //
+  function snapshotGroups() {
+    var nodes = document.querySelectorAll("#facets details.facet-group");
+    Array.prototype.forEach.call(nodes, function (node) {
+      groupOpen[node.getAttribute("data-dim")] = node.open;
     });
-    if (!tags.length) {
-      $('#tagbar').innerHTML = '<span style="color:#9aa1ab;font-size:12.5px;">未选择任何筛选条件</span>';
+  }
+
+  function optionsHTML(dim, options) {
+    var chosen = state.filters[dim] || [];
+    var list = options || [];
+    var shown = expandedGroups[dim] ? list : list.slice(0, FACET_PREVIEW);
+    var html = shown.map(function (opt) {
+      var value = String(opt.value);
+      var checked = chosen.indexOf(value) >= 0;
+      var zero = !checked && Number(opt.count) === 0;
+      return (
+        '<label class="facet-option' + (checked ? " selected" : "") + (zero ? " zero" : "") + '">' +
+        '<input type="checkbox" value="' + IRS.esc(value) + '" data-dim="' + dim + '"' +
+        (checked ? " checked" : "") + ">" +
+        '<span class="name" title="' + IRS.esc(opt.label || value) + '">' +
+        IRS.esc(opt.label || value) + "</span>" +
+        '<span class="count">' + IRS.num(opt.count) + "</span>" +
+        "</label>"
+      );
+    }).join("");
+
+    if (!shown.length) html = '<p class="meta-note">暂无数据</p>';
+    if (list.length > FACET_PREVIEW) {
+      html +=
+        '<button class="expand-btn" type="button" data-expand="' + dim + '">' +
+        (expandedGroups[dim] ? "收起" : "展开更多（共 " + list.length + " 项）") +
+        "</button>";
+    }
+    return html;
+  }
+
+  function renderFacets(facets, dimensions) {
+    var box = $("#facets");
+    if (!box) return;
+    snapshotGroups();
+    if (dimensions && dimensions.length) state.dimensions = dimensions;
+
+    box.innerHTML = state.dimensions.map(function (dim, index) {
+      var options = (facets && facets[dim.key]) || [];
+      var chosen = (state.filters[dim.key] || []).length;
+      var open = groupOpen.hasOwnProperty(dim.key)
+        ? groupOpen[dim.key]
+        : chosen > 0 || index < 3;
+      return (
+        '<details class="facet-group" data-dim="' + dim.key + '"' + (open ? " open" : "") + ">" +
+        '<summary><span class="chev" aria-hidden="true"></span>' +
+        '<span class="fname">' + IRS.esc(dim.label) + "</span>" +
+        '<span class="badge"' + (chosen ? "" : " hidden") + ">" + chosen + "</span></summary>" +
+        '<div class="facet-options">' + optionsHTML(dim.key, options) + "</div>" +
+        "</details>"
+      );
+    }).join("");
+  }
+
+  /** 单个维度的选项与角标就地重绘（不动 <details>，保留展开状态）。 */
+  function refreshFacetGroup(dim) {
+    var node = document.querySelector('#facets details.facet-group[data-dim="' + dim + '"]');
+    if (!node) return;
+    var options = (lastData && lastData.facets && lastData.facets[dim]) || [];
+    var holder = node.querySelector(".facet-options");
+    if (holder) holder.innerHTML = optionsHTML(dim, options);
+    var chosen = (state.filters[dim] || []).length;
+    var badge = node.querySelector("summary .badge");
+    if (badge) {
+      badge.textContent = chosen;
+      badge.hidden = chosen === 0;
+    }
+  }
+
+  // -------------------------------------------------------------- 条件标签 //
+  function renderTags(tags) {
+    var box = $("#tagbar");
+    if (!box) return;
+    var data = tags;
+    if (!data) {
+      // 本地合成（尚未提交时也要让用户看到自己勾了什么）
+      data = [];
+      state.dimensions.forEach(function (dim) {
+        (state.filters[dim.key] || []).forEach(function (value) {
+          data.push({
+            dimension: dim.key,
+            value: value,
+            label: dim.label,
+            display: displayValue(dim.key, value)
+          });
+        });
+      });
+    }
+    if (!data.length) {
+      box.innerHTML = "";
       return;
     }
-    $('#tagbar').innerHTML = tags.map((t) => `
-      <span class="tag">${IRS.esc(t.display)}
-        <button type="button" data-dim="${IRS.esc(t.dimension)}" data-value="${IRS.esc(t.value)}"
-                title="移除该条件" aria-label="移除 ${IRS.esc(t.display)}">×</button>
-      </span>`).join('') + '<button type="button" class="clear-all" id="clear-all">清空全部</button>';
-  }
-
-  function onTagClick(e) {
-    const clearAll = e.target.closest('#clear-all');
-    const btn = e.target.closest('button[data-dim]');
-    if (!clearAll && !btn) return;
-
-    if (clearAll) {
-      state.filters = {};
-      syncFacetCheckboxes(null);
-    } else {
-      const dim = btn.dataset.dim;
-      const list = (state.filters[dim] || []).filter((v) => v !== btn.dataset.value);
-      if (list.length) state.filters[dim] = list; else delete state.filters[dim];
-      syncFacetCheckboxes({ dim: dim, value: btn.dataset.value, checked: false });
+    var html = data.map(function (tag) {
+      return (
+        '<span class="tag"><span class="dim">' + IRS.esc(tag.label) + "</span>" +
+        IRS.esc(tag.display) +
+        '<button type="button" data-dim="' + IRS.esc(tag.dimension) + '"' +
+        ' data-value="' + IRS.esc(tag.value) + '"' +
+        ' aria-label="移除 ' + IRS.esc(tag.label + tag.display) + '">×</button></span>'
+      );
+    }).join("");
+    if (data.length > 1) {
+      html += '<button class="clear-all" type="button" id="clear-all">清空全部</button>';
     }
-    // 移除标签同样只改界面，等「搜索」按钮统一提交
-    updateFacetBadges();
-    renderTags();
-    syncPendingUI();
+    box.innerHTML = html;
   }
 
-  /** 把分面里的勾选框对齐 state.filters（传 null 表示全部取消勾选）。 */
-  function syncFacetCheckboxes(target) {
-    document.querySelectorAll('#facets input[type=checkbox][data-dim]').forEach((box) => {
-      if (!target) { box.checked = false; return; }
-      if (box.dataset.dim === target.dim && box.value === target.value) box.checked = target.checked;
+  // ------------------------------------------------------- 待提交状态提示 //
+  function updateFilterHint() {
+    var hint = $("#filter-hint");
+    var pending = filtersKey(state.filters);
+    var dirty = hint ? pending !== appliedKey : false;
+    if (hint) {
+      if (dirty) {
+        var n = selectedCount(state.filters);
+        hint.hidden = false;
+        hint.textContent = n
+          ? "已选择 " + n + " 个筛选条件，点右侧「检索」或左侧底部按钮才会生效。"
+          : "已清空筛选条件，点「检索」后生效。";
+      } else {
+        hint.hidden = true;
+      }
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("[data-search]"), function (btn) {
+      btn.classList.toggle("pending", dirty);
     });
+    // 条件改了但还没检索时，按钮改成「应用筛选」，避免显示上一次的旧条数
+    var cta = document.querySelector(".sidebar-actions .btn");
+    if (cta && dirty) cta.textContent = "应用筛选";
   }
 
-  /* ------------------------------------------------------------------ */
-  /* 结果渲染（需求十二 高亮 / 需求十三 卡片·表格）                       */
-  /* ------------------------------------------------------------------ */
-  function render(data) {
-    if (!data) return;
-    const items = data.items || [];
-    const modeText = { fts: '全文索引', like: '模糊匹配', all: '全部记录', pinyin: '拼音匹配', and: '多词·与', or: '多词·或' }[data.mode] || data.mode;
-    $('#summary').innerHTML = items.length
-      ? `共找到 <b>${IRS.num(data.total)}</b> 条结果 · 第 ${data.page}/${data.pages} 页 · 匹配方式：${IRS.esc(modeText)}`
-      : `未找到匹配结果`;
+  // ------------------------------------------------------------------ 标签 //
 
+  // -------------------------------------------------------------- 结果渲染 //
+  function emptyBlock(title, hint) {
+    return (
+      '<div class="empty"><span class="big" aria-hidden="true">◍</span>' +
+      IRS.esc(title) +
+      (hint ? '<p class="hint">' + hint + "</p>" : "") +
+      "</div>"
+    );
+  }
+
+  function renderResults(data) {
+    var box = $("#results");
+    if (!box) return;
+    var items = data.items || [];
     if (!items.length) {
-      $('#results').innerHTML = emptyBlock('没有匹配的记录',
-        '试试减少筛选条件，或换用拼音（如 zhangsan）、去掉部分关键词。');
+      box.innerHTML = emptyBlock(
+        "没有找到匹配的档案",
+        "试试减少关键词，或点左侧「清空全部」后重新检索。<br>" +
+        '<button class="mini" type="button" data-reset>清空关键词与筛选</button>'
+      );
       return;
     }
-    $('#results').innerHTML = state.view === 'table' ? tableView(items) : cardView(items);
+    if (state.view === "table") {
+      box.innerHTML =
+        '<div class="tablewrap"><table class="result"><thead><tr>' +
+        ["姓名", "届别", "学院", "专业", "去向地区", "录用单位", "岗位方向", "岗位类别", "学历", ""]
+          .map(function (label) { return "<th>" + label + "</th>"; }).join("") +
+        "</tr></thead><tbody>" +
+        items.map(IRS.tableRowHTML).join("") +
+        "</tbody></table></div>";
+      return;
+    }
+    box.innerHTML = '<div class="cards">' + items.map(IRS.cardHTML).join("") + "</div>";
   }
 
-  function cardView(items) {
-    return '<div class="cards">' + items.map((it) => {
-      const snip = it.highlight && it.highlight.snippet;
-      const cat = it.position_category ? `<span class="badge-cat">${IRS.esc(it.position_category)}</span>` : '';
-      const cohort = IRS.cohort(it);
-      return `
-        <article class="card">
-          <div class="head">
-            <span class="name">${IRS.hi(it, 'name')}</span>
-            ${cohort ? `<span class="badge-cohort">${IRS.esc(cohort)}</span>` : ''}
-            ${cat}
-          </div>
-          <div class="line"><span class="k">学院专业</span><span class="v">${IRS.hi(it, 'college')} · ${IRS.hi(it, 'major')}</span></div>
-          <div class="line"><span class="k">学历</span><span class="v">${IRS.hi(it, 'degree')}</span></div>
-          <div class="line"><span class="k">去向</span><span class="v">${IRS.hi(it, 'province')}${(it.city || it.province) ? ' · ' : ''}${IRS.hi(it, 'city')} ${IRS.hi(it, 'destination_org')}</span></div>
-          <div class="line"><span class="k">岗位</span><span class="v">${IRS.hi(it, 'position')}</span></div>
-          ${snip ? `<div class="snippet">${snip}</div>` : ''}
-          <div class="foot">
-            <span class="src" title="${IRS.esc(it.notice_title || '')}">来源：${IRS.esc(IRS.dash(it.notice_title))}</span>
-            <a class="detail" href="/detail.html?id=${it.id}">查看详情 →</a>
-          </div>
-        </article>`;
-    }).join('') + '</div>';
+  function renderSummary(data) {
+    var box = $("#summary");
+    if (!box) return;
+    var mode = IRS.modeLabel(data.mode);
+    box.innerHTML =
+      "共 <b>" + IRS.num(data.total) + "</b> 条" +
+      (mode ? ' <span class="muted">· ' + IRS.esc(mode) + "</span>" : "") +
+      (data.page && data.pages ? ' <span class="muted">· 第 ' + data.page + " / " + data.pages + " 页</span>" : "");
   }
 
-  function tableView(items) {
-    const rows = items.map((it) => `
-      <tr>
-        <td class="name">${IRS.hi(it, 'name')}</td>
-        <td><div class="ellip">${IRS.hi(it, 'college')}</div></td>
-        <td><div class="ellip">${IRS.hi(it, 'major')}</div></td>
-        <td class="nowrap">${IRS.esc(IRS.cohort(it) || '—')}</td>
-        <td class="nowrap">${IRS.hi(it, 'city')}</td>
-        <td><div class="ellip">${IRS.hi(it, 'destination_org')}</div></td>
-        <td><div class="ellip">${IRS.hi(it, 'position')}</div></td>
-        <td class="nowrap"><a href="/detail.html?id=${it.id}">详情</a></td>
-      </tr>`).join('');
-    return `
-      <div class="tablewrap">
-        <table class="result">
-          <thead><tr>
-            <th>姓名</th><th>学院</th><th>专业</th><th>届别</th><th>城市</th><th>单位</th><th>岗位</th><th></th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+  function renderFuzzyHint(data) {
+    var box = $("#fuzzy-hint");
+    if (!box) return;
+    var groups = data.term_groups || [];
+    if (!groups.length) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    var lines = groups.map(function (group) {
+      var added = (group.added || []).slice(0, 4).map(function (v) { return "「" + IRS.esc(v) + "」"; });
+      if (!added.length) return "";
+      return "「" + IRS.esc(group.term) + "」已按词表扩展为 " + added.join("、") +
+        ((group.added || []).length > 4 ? " 等" : "");
+    }).filter(Boolean);
+    if (!lines.length) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = lines.join("<br>") +
+      '<br><span class="muted">高亮标出的是系统实际用来匹配的词 —— 因此可能与你输入的原词不同。</span>';
   }
 
-  function emptyBlock(title, hint, small) {
-    return `<div class="empty" style="${small ? 'padding:20px;' : ''}">
-      <span class="big">🔍</span><div style="font-weight:600;color:#374151;">${IRS.esc(title)}</div>
-      ${hint ? `<div style="margin-top:6px;font-size:12.5px;">${IRS.esc(hint)}</div>` : ''}
-    </div>`;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* 分页（需求 11.3：< 上一页 1 2 3 4 5 下一页 >）                        */
-  /* ------------------------------------------------------------------ */
   function renderPager(data) {
-    if (!data || !data.pages) { $('#pager').innerHTML = ''; return; }
-    const cur = data.page;
-    const total = data.pages;
-    const windowSize = 5;
-    let start = Math.max(1, cur - Math.floor(windowSize / 2));
-    let end = Math.min(total, start + windowSize - 1);
-    start = Math.max(1, end - windowSize + 1);
+    var box = $("#pager");
+    if (!box) return;
+    // 样式全部挂在 .pager 上：容器少了这个类就会退回浏览器默认按钮（曾经踩过一次），
+    // 这里补一道保险，无论 HTML 怎么写都能拿到正确外观
+    if (!box.classList.contains("pager")) box.classList.add("pager");
+    var pages = data.pages || 0;
+    if (pages <= 1) {
+      box.innerHTML = "";
+      return;
+    }
+    var current = data.page || 1;
+    var windowSize = 2;
+    var list = [];
+    for (var p = 1; p <= pages; p += 1) {
+      if (p === 1 || p === pages || Math.abs(p - current) <= windowSize) list.push(p);
+      else if (list[list.length - 1] !== "…") list.push("…");
+    }
+    // 与全站一致的胶囊控件：分段控件（.viewswitch）+ 筛选标签（.chip）同一套外观
+    var step = ' class="pager-step" type="button" data-page="';
+    var html = '<div class="pager-group" role="group" aria-label="分页导航">';
+    html += '<button' + step + (current - 1) + '"' +
+      (data.has_prev ? "" : " disabled") + " aria-label=\"上一页\">上一页</button>";
+    list.forEach(function (item) {
+      if (item === "…") html += '<span class="gap" aria-hidden="true">…</span>';
+      else {
+        html += '<button type="button" data-page="' + item + '"' +
+          (item === current ? ' class="active" aria-current="page"' : "") +
+          ' aria-label="第 ' + item + ' 页">' + item + "</button>";
+      }
+    });
+    html += '<button' + step + (current + 1) + '"' +
+      (data.has_next ? "" : " disabled") + " aria-label=\"下一页\">下一页</button>";
+    html += "</div>";
+    html += '<span class="jump">跳到 <input type="number" min="1" max="' + pages +
+      '" value="' + current + '" aria-label="跳到页码"> 页</span>';
+    box.innerHTML = html;
+  }
 
-    const parts = [];
-    parts.push(`<button data-page="${cur - 1}" ${data.has_prev ? '' : 'disabled'}>‹ 上一页</button>`);
-    if (start > 1) {
-      parts.push(`<button data-page="1">1</button>`);
-      if (start > 2) parts.push('<span class="gap">…</span>');
-    }
-    for (let p = start; p <= end; p++) {
-      parts.push(`<button data-page="${p}" class="${p === cur ? 'active' : ''}">${p}</button>`);
-    }
-    if (end < total) {
-      if (end < total - 1) parts.push('<span class="gap">…</span>');
-      parts.push(`<button data-page="${total}">${total}</button>`);
-    }
-    parts.push(`<button data-page="${cur + 1}" ${data.has_next ? '' : 'disabled'}>下一页 ›</button>`);
-    parts.push(`<span class="jump">跳至 <input id="jump" type="number" min="1" max="${total}" value="${cur}" /> 页</span>`);
-    $('#pager').innerHTML = parts.join('');
+  function updateCTALabel(total) {
+    state.lastTotal = (total || total === 0) ? total : null;
+    var btn = document.querySelector(".sidebar-actions .btn");
+    if (!btn) return;
+    btn.textContent = state.lastTotal === null
+      ? "查看结果"
+      : "查看 " + IRS.num(state.lastTotal) + " 条结果";
+  }
 
-    const jump = $('#jump');
-    jump.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter') return;
-      const p = Math.min(total, Math.max(1, parseInt(e.target.value, 10) || 1));
-      run(p);
+  function updateViewButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll("#viewswitch button"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-view") === state.view);
     });
   }
 
-  function onPagerClick(e) {
-    const btn = e.target.closest('button[data-page]');
-    if (!btn || btn.disabled) return;
-    run(parseInt(btn.dataset.page, 10));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function setLoading(on) {
+    var box = $("#results");
+    if (box) box.parentNode.classList.toggle("loading", !!on);
   }
 
-  /* ------------------------------------------------------------------ */
-  /* 搜索框自动补全                                                      */
-  /* ------------------------------------------------------------------ */
-  const KIND_LABEL = { colleges: '学院', majors: '专业', provinces: '省份', cities: '城市' };
-  let suggestData = null;
-  let lastSuggest = null;
-  let suggestIndex = -1;
+  // ---------------------------------------------------------------- 检索 //
+  function run(page) {
+    // ① 关键词以输入框为唯一真相，每次检索都重新读取
+    state.q = $("#q").value.trim();
+    state.page = Math.max(1, page || 1);
+    var sizeSel = $("#page-size");
+    if (sizeSel && sizeSel.value) state.page_size = parseInt(sizeSel.value, 10) || state.page_size;
+    var sortSel = $("#sort");
+    if (sortSel && sortSel.value) state.sort = sortSel.value;
 
-  async function loadSuggestions() {
-    try {
-      suggestData = await IRS.getJSON('/suggest');
-    } catch (_) { /* 补全失败不影响检索 */ }
+    var params = IRS.searchParams(state, keys);
+    params.set("page", String(state.page));
+    if (state.page_size) params.set("page_size", String(state.page_size));
+
+    setLoading(true);
+    return IRS.getJSON(IRS.API + "/search", params)
+      .then(function (data) {
+        lastData = data;
+        appliedKey = filtersKey(state.filters);
+        if (data.page) state.page = data.page;
+
+        renderSummary(data);
+        renderTags(data.filter_tags);
+        renderFacets(data.facets, data.dimensions);
+        renderFuzzyHint(data);
+        renderResults(data);
+        renderPager(data);
+        updateCTALabel(data.total);
+        updateFilterHint();
+        IRS.writeState(state, keys);
+        setLoading(false);
+      })
+      .catch(function (err) {
+        setLoading(false);
+        var box = $("#results");
+        if (box) box.innerHTML = emptyBlock("检索失败", IRS.esc(err.message));
+        IRS.toast("检索失败：" + err.message, 3200);
+      });
   }
 
-  const onTypeSuggest = IRS.debounce(() => {
-    if (!suggestData) { loadSuggestions(); return; }
-    const kw = $('#q').value.trim().toLowerCase();
-    if (kw.length < 1) { closeSuggest(); return; }
-    const flat = [];
-    Object.keys(KIND_LABEL).forEach((kind) => {
-      (suggestData[kind] || []).forEach((value) => {
-        if (String(value).toLowerCase().includes(kw)) flat.push({ value: value, kind: KIND_LABEL[kind] });
+  // ------------------------------------------------------------ 交互绑定 //
+  function commitFilters() {
+    renderTags(null);
+    updateFilterHint();
+  }
+
+  function onFacetChange(ev) {
+    var input = ev.target;
+    if (!input || input.type !== "checkbox") return;
+    var dim = input.getAttribute("data-dim");
+    var value = input.value;
+    var list = (state.filters[dim] || []).slice();
+    var at = list.indexOf(value);
+    if (input.checked && at < 0) list.push(value);
+    if (!input.checked && at >= 0) list.splice(at, 1);
+    if (list.length) state.filters[dim] = list;
+    else delete state.filters[dim];
+
+    var label = input.closest(".facet-option");
+    if (label) label.classList.toggle("selected", input.checked);
+
+    renderTags(null);
+    updateFilterHint();
+  }
+
+  function onExpandClick(ev) {
+    var btn = ev.target.closest("button[data-expand]");
+    if (!btn) return;
+    var dim = btn.getAttribute("data-expand");
+    expandedGroups[dim] = !expandedGroups[dim];
+    refreshFacetGroup(dim);
+  }
+
+  function onTagClick(ev) {
+    if (ev.target.id === "clear-all") {
+      state.filters = {};
+      keys.forEach(refreshFacetGroup);
+      renderTags(null);
+      updateFilterHint();
+      return;
+    }
+    var btn = ev.target.closest("button[data-dim][data-value]");
+    if (!btn) return;
+    var dim = btn.getAttribute("data-dim");
+    var value = btn.getAttribute("data-value");
+    var list = (state.filters[dim] || []).filter(function (v) { return v !== value; });
+    if (list.length) state.filters[dim] = list;
+    else delete state.filters[dim];
+    refreshFacetGroup(dim);
+    renderTags(null);
+    updateFilterHint();
+  }
+
+  // ------------------------------------------------------------ 输入建议 //
+  function kindLabel(kind) {
+    return { colleges: "学院", majors: "专业", provinces: "省份", cities: "城市", cohorts: "届别", alias: "简称" }[kind] || "";
+  }
+
+  function buildSuggestIndex(data) {
+    var groups = [
+      ["colleges", data.colleges || []],
+      ["majors", data.majors || []],
+      ["provinces", data.provinces || []],
+      ["cities", data.cities || []],
+      ["cohorts", (data.cohorts || []).map(function (v) { return String(v); })]
+    ];
+    var out = [];
+    groups.forEach(function (pair) {
+      pair[1].forEach(function (value) {
+        out.push({ value: String(value), kind: pair[0], text: String(value) });
       });
     });
-    const seen = new Set();
-    const picked = [];
-    flat.forEach((f) => {
-      const key = f.kind + '|' + f.value;
-      if (seen.has(key)) return;
-      seen.add(key);
-      if (picked.length < 12) picked.push(f);
+    (data.aliases || []).forEach(function (pair) {
+      out.push({ value: pair.alias, kind: "alias", text: pair.alias, alias: pair.canonical });
     });
-    if (!picked.length) { closeSuggest(); return; }
-    lastSuggest = picked;
+    return out;
+  }
+
+  function renderSuggest(keyword) {
+    var box = $("#suggest");
+    if (!box) return;
+    var q = String(keyword || "").trim().toLowerCase();
+    var matches = [];
+    if (!q) {
+      matches = suggestItems.slice(0, 8);
+    } else {
+      suggestItems.forEach(function (item) {
+        if (item.text.toLowerCase().indexOf(q) >= 0 ||
+            (item.alias && item.alias.toLowerCase().indexOf(q) >= 0)) {
+          matches.push(item);
+        }
+      });
+      matches = matches.slice(0, 12);
+    }
     suggestIndex = -1;
-    $('#suggest').innerHTML =
-      `<div class="group-title">建议关键词（点击填入并搜索）</div>` +
-      picked.map((f) => `<div class="item" data-value="${IRS.esc(f.value)}">
-          <span>${IRS.esc(f.value)}</span><span class="kind">${f.kind}</span></div>`).join('');
-    $('#suggest').querySelectorAll('.item').forEach((el) => {
-      el.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        commitSuggest(el.dataset.value);
-      });
+    if (!matches.length) {
+      box.classList.remove("open");
+      box.innerHTML = "";
+      return;
+    }
+    var html = "";
+    var lastKind = "";
+    matches.forEach(function (item, i) {
+      if (item.kind !== lastKind) {
+        html += '<div class="group-title">' + kindLabel(item.kind) + "</div>";
+        lastKind = item.kind;
+      }
+      html += '<div class="item" role="option" data-index="' + i + '" data-value="' + IRS.esc(item.value) + '">' +
+        IRS.esc(item.value) +
+        (item.alias ? '<span class="alias-hint"> → ' + IRS.esc(item.alias) + "</span>" : "") +
+        '<span class="kind">' + kindLabel(item.kind) + "</span></div>";
     });
-    openSuggest();
-  }, 120);
+    box.innerHTML = html;
+    box.classList.add("open");
+  }
 
-  function commitSuggest(value) {
-    $('#q').value = value;
-    closeSuggest();
+  function highlightSuggest(dir) {
+    var box = $("#suggest");
+    var items = box ? box.querySelectorAll(".item") : [];
+    if (!items.length) return;
+    suggestIndex = (suggestIndex + dir + items.length) % items.length;
+    Array.prototype.forEach.call(items, function (el, i) {
+      el.classList.toggle("active", i === suggestIndex);
+    });
+  }
+
+  function acceptSuggest(value) {
+    $("#q").value = value;
+    var box = $("#suggest");
+    if (box) { box.classList.remove("open"); box.innerHTML = ""; }
+    suggestIndex = -1;
     run(1);
   }
 
-  function openSuggest() { $('#suggest').classList.add('open'); }
-  function closeSuggest() { $('#suggest').classList.remove('open'); }
+  function bindSuggest() {
+    var input = $("#q");
+    var box = $("#suggest");
+    if (!input || !box) return;
 
-  document.addEventListener('DOMContentLoaded', boot);
+    IRS.getJSON(IRS.API + "/suggest")
+      .then(function (data) { suggestItems = buildSuggestIndex(data); })
+      .catch(function () { suggestItems = []; });
+
+    input.addEventListener("input", IRS.debounce(function () {
+      renderSuggest(input.value);
+    }, 120));
+
+    input.addEventListener("focus", function () {
+      if (input.value.trim()) renderSuggest(input.value);
+    });
+
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "ArrowDown") { ev.preventDefault(); highlightSuggest(1); }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); highlightSuggest(-1); }
+      else if (ev.key === "Escape") { box.classList.remove("open"); }
+      else if (ev.key === "Enter") {
+        var active = box.querySelector(".item.active");
+        if (active) { ev.preventDefault(); acceptSuggest(active.getAttribute("data-value")); }
+      }
+    });
+
+    box.addEventListener("mousedown", function (ev) {
+      var item = ev.target.closest(".item");
+      if (!item) return;
+      ev.preventDefault();
+      acceptSuggest(item.getAttribute("data-value"));
+    });
+
+    document.addEventListener("click", function (ev) {
+      if (!ev.target.closest(".searchbar")) box.classList.remove("open");
+    });
+  }
+
+  // ------------------------------------------------------------ 其它绑定 //
+  function bindUI() {
+    var form = $("#search-form");
+    if (form) {
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        run(1);
+      });
+    }
+
+    var sortSel = $("#sort");
+    if (sortSel) sortSel.addEventListener("change", function () { run(1); });
+    var sizeSel = $("#page-size");
+    if (sizeSel) sizeSel.addEventListener("change", function () { run(1); });
+
+    document.addEventListener("click", function (ev) {
+      var search = ev.target.closest("[data-search]");
+      // #btn-search 是 submit 按钮，交给 form 的 submit 事件处理，避免重复请求
+      if (search && search.type !== "submit") {
+        ev.preventDefault();
+        run(1);
+        return;
+      }
+      var reset = ev.target.closest("[data-reset]");
+      if (reset) {
+        $("#q").value = "";
+        state.filters = {};
+        state.q = "";
+        keys.forEach(refreshFacetGroup);
+        renderTags(null);
+        run(1);
+        return;
+      }
+      var view = ev.target.closest("#viewswitch button");
+      if (view) {
+        state.view = view.getAttribute("data-view");
+        updateViewButtons();
+        if (lastData) renderResults(lastData);
+        IRS.writeState(state, keys);
+        return;
+      }
+      var page = ev.target.closest("#pager button[data-page]");
+      if (page) {
+        var target = parseInt(page.getAttribute("data-page"), 10);
+        if (target >= 1) run(target);
+      }
+    });
+
+    var facets = $("#facets");
+    if (facets) {
+      facets.addEventListener("change", onFacetChange);
+      facets.addEventListener("click", onExpandClick);
+    }
+
+    var tagbar = $("#tagbar");
+    if (tagbar) tagbar.addEventListener("click", onTagClick);
+
+    $("#pager") && $("#pager").addEventListener("keydown", function (ev) {
+      if (ev.key !== "Enter") return;
+      var input = ev.target.closest("input[type=number]");
+      if (!input) return;
+      run(Math.max(1, parseInt(input.value, 10) || 1));
+    });
+
+    window.addEventListener("popstate", function () {
+      var restored = IRS.readState(keys);
+      state.q = restored.q;
+      state.sort = restored.sort;
+      state.page_size = restored.page_size;
+      state.view = restored.view;
+      state.filters = restored.filters;
+      $("#q").value = restored.q;
+      updateViewButtons();
+      run(restored.page);
+    });
+  }
+
+  // ---------------------------------------------------------------- 启动 //
+  function loadConfig() {
+    return IRS.getJSON(IRS.API + "/config")
+      .then(function (config) {
+        if (config.dimensions && config.dimensions.length) {
+          state.dimensions = config.dimensions;
+          keys = config.dimensions.map(function (d) { return d.key; });
+        }
+        state.defaultPageSize = config.default_page_size || state.defaultPageSize;
+        state.maxPageSize = config.max_page_size || state.maxPageSize;
+
+        var sortSel = $("#sort");
+        if (sortSel && config.sorts) {
+          sortSel.innerHTML = config.sorts.map(function (item) {
+            return '<option value="' + IRS.esc(item.value) + '">' + IRS.esc(item.label) + "</option>";
+          }).join("");
+        }
+        var sizeSel = $("#page-size");
+        if (sizeSel) {
+          var sizes = [state.defaultPageSize];
+          [50, state.maxPageSize].forEach(function (n) {
+            if (n > sizes[0] && sizes.indexOf(n) < 0) sizes.push(n);
+          });
+          sizeSel.innerHTML = sizes.map(function (n) {
+            return '<option value="' + n + '">' + n + " 条 / 页</option>";
+          }).join("");
+        }
+      })
+      .catch(function (err) {
+        IRS.toast("配置加载失败，使用默认设置：" + err.message, 3000);
+      });
+  }
+
+  IRS.ready(function () {
+    var restored = IRS.readState(keys);
+    state.q = restored.q;
+    state.sort = restored.sort;
+    state.page_size = restored.page_size;
+    state.view = restored.view;
+    state.filters = restored.filters;
+
+    var input = $("#q");
+    if (input) input.value = state.q;
+    updateViewButtons();
+    renderFacetSkeleton();
+    renderTags(null);
+    bindUI();
+    bindSuggest();
+
+    loadConfig().then(function () {
+      if (state.sort) {
+        var sortSel = $("#sort");
+        if (sortSel) sortSel.value = state.sort;
+      }
+      if (state.page_size) {
+        var sizeSel = $("#page-size");
+        if (sizeSel) sizeSel.value = String(state.page_size);
+      }
+      appliedKey = filtersKey(state.filters);
+      run(restored.page || 1);
+    });
+  });
 })();

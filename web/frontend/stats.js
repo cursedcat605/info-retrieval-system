@@ -1,309 +1,327 @@
-/* =========================================================================
-   统计分析页面（需求十五）
-   15.1 省份分布（柱状图）  15.2 届别趋势（折线图）
-   15.3 岗位类别（饼图）    15.4 学院分布（横向柱状图）
-   + 学历层次（环形图） + 去向城市（横向柱状图） + 字段填充率
-   ECharts 通过 CDN 加载；若不可用（离线环境）自动降级为纯 CSS 条形图。
-   ========================================================================= */
+/* ==========================================================================
+   统计分析页
+   --------------------------------------------------------------------------
+   ECharts 从 CDN 异步加载：
+   * 不能写成阻塞式 <script>，否则断网 / CDN 被墙时整页卡住；
+   * 2.5s 内没加载出来就放弃，改为渲染纯 CSS 条形列表（.fallback-list）。
+   ========================================================================== */
 (function () {
-  'use strict';
-  const IRS = window.IRS;
-  const $ = (sel) => document.querySelector(sel);
+  "use strict";
 
-  const PALETTE = ['#1d4ed8', '#6d8dfb', '#4f9cf9', '#38bdf8', '#2dd4bf',
-    '#a3e635', '#fbbf24', '#fb923c', '#f87171', '#c084fc'];
-  const chartRefs = [];
+  var IRS = window.IRS;
+  var $ = function (sel) { return document.querySelector(sel); };
 
-  /* ------------------------- ECharts 按需异步加载 -------------------------
-     不要用阻塞 <script src="cdn...">：CDN 挂起时 DOMContentLoaded 永不触发，
-     整页会一直停在「加载中」。这里异步注入 + 超时，失败就走降级渲染。 */
-  const ECHARTS_URL = 'https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js';
-  const ECHARTS_TIMEOUT = 2500;
-  let hasECharts = typeof window.echarts !== 'undefined';
+  var ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js";
+  var CDN_TIMEOUT = 2500;
+  var BLUES = ["#2866a5", "#4c8fca", "#7db4dd", "#a9cbe4", "#1d4f78", "#dfaa61", "#73ae8b"];
+  var TEXT = "#637b91";
+  var LINE = "#e7edf2";
 
-  function loadECharts(timeout) {
-    if (hasECharts) return Promise.resolve(true);
-    return new Promise((resolve) => {
-      let settled = false;
-      const finish = (ok) => {
-        if (settled) return;
-        settled = true;
-        hasECharts = ok;
-        resolve(ok);
-      };
-      const timer = setTimeout(() => finish(false), timeout);
-      const script = document.createElement('script');
-      script.src = ECHARTS_URL;
+  var stats = null;
+  var charts = [];
+  var chartsDone = false;
+  var pendingScript = null;
+
+  // ------------------------------------------------------------ ECharts 加载 //
+  function loadECharts() {
+    return new Promise(function (resolve, reject) {
+      if (window.echarts) { resolve(window.echarts); return; }
+      var timeout = window.setTimeout(function () {
+        reject(new Error("ECharts 加载超时"));
+      }, CDN_TIMEOUT);
+      var script = document.createElement("script");
+      pendingScript = script;
+      script.src = ECHARTS_CDN;
       script.async = true;
-      script.onload = () => { clearTimeout(timer); finish(typeof window.echarts !== 'undefined'); };
-      script.onerror = () => { clearTimeout(timer); finish(false); };
+      script.onload = function () {
+        window.clearTimeout(timeout);
+        if (window.echarts) resolve(window.echarts);
+        else reject(new Error("ECharts 未就绪"));
+      };
+      script.onerror = function () {
+        window.clearTimeout(timeout);
+        reject(new Error("ECharts 加载失败"));
+      };
       document.head.appendChild(script);
     });
   }
 
-  /* --------------------------- 通用图表封装 --------------------------- */
-  function makeChart(domId, title) {
-    const dom = document.getElementById(domId);
-    if (!dom) return null;
-    if (!hasECharts) return null;
-    const chart = window.echarts.init(dom, null, { renderer: 'canvas' });
-    chartRefs.push(chart);
-    dom._title = title;
+  function baseOption() {
+    return {
+      color: BLUES,
+      textStyle: { fontFamily: "DM Sans, PingFang SC, Microsoft YaHei, sans-serif", color: TEXT },
+      tooltip: { trigger: "item", confine: true, borderColor: LINE },
+      grid: { left: 8, right: 18, top: 20, bottom: 6, containLabel: true },
+      animationDuration: 650,
+      animationDurationUpdate: 420,
+      animationEasing: "cubicOut",
+      animationEasingUpdate: "cubicOut",
+      stateAnimation: { duration: 220, easing: "cubicOut" }
+    };
+  }
+
+  function axisLabel() {
+    return { color: TEXT, fontSize: 11 };
+  }
+
+  function splitLine() {
+    return { lineStyle: { color: LINE, type: "dashed" } };
+  }
+
+  function initChart(id, option) {
+    var el = document.getElementById(id);
+    if (!el || !window.echarts) return null;
+    el.hidden = false;                 // 降级时被隐藏过，初始化前必须还原，否则尺寸为 0
+    if (el.clientHeight === 0) return null;
+    var chart = window.echarts.init(el, null, { renderer: "canvas" });
+    chart.setOption(option);
+    charts.push(chart);
     return chart;
   }
 
-  function resizeAll() { chartRefs.forEach((c) => c && c.resize()); }
-
-  const AXIS_LABEL = { color: '#4b5563', fontSize: 12 };
-  const SPLIT_LINE = { lineStyle: { color: '#eef1f5' } };
-  const GRID = { left: 12, right: 20, top: 34, bottom: 8, containLabel: true };
-
-  /* --------------------------- 降级渲染 --------------------------- */
-  function fallbackBar(domId, rows, unit) {
-    const dom = document.getElementById(domId);
-    if (!dom) return;
-    const max = Math.max(1, ...rows.map((r) => r.count));
-    dom.innerHTML = '<div class="fallback-list">' + (rows.length ? rows.map((r) => `
-      <div class="fallback-row">
-        <span class="fl" title="${IRS.esc(r.value)}">${IRS.esc(r.value)}</span>
-        <span class="fb"><i style="width:${(r.count / max) * 100}%"></i></span>
-        <span class="fv">${IRS.num(r.count)}${unit || ''}</span>
-      </div>`).join('') : '<div style="color:#9aa1ab;padding:12px 0;">暂无数据</div>') + '</div>';
-  }
-
-  /* --------------------------- 各图表 --------------------------- */
-  function renderProvince(rows) {
-    const chart = makeChart('chart-province');
-    const data = rows.slice().reverse();          // 横向柱状图：从下往上由大到小
-    if (!chart) return fallbackBar('chart-province', rows);
-    chart.setOption({
-      color: PALETTE,
-      grid: GRID,
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      xAxis: { type: 'value', axisLabel: AXIS_LABEL, splitLine: SPLIT_LINE },
-      yAxis: {
-        type: 'category',
-        data: data.map((r) => r.value),
-        axisLabel: Object.assign({}, AXIS_LABEL, { interval: 0 }),
-        axisLine: { lineStyle: { color: '#e3e6ea' } },
+  // -------------------------------------------------------------- 图表配置 //
+  function cohortOption(rows) {
+    var option = baseOption();
+    option.grid = { left: 8, right: 24, top: 24, bottom: 6, containLabel: true };
+    option.tooltip = { trigger: "axis", confine: true, borderColor: LINE };
+    option.xAxis = {
+      type: "category",
+      data: rows.map(function (r) { return r.value + "届"; }),
+      axisLabel: axisLabel(),
+      axisLine: { lineStyle: { color: LINE } }
+    };
+    option.yAxis = { type: "value", axisLabel: axisLabel(), splitLine: splitLine() };
+    option.series = [{
+      type: "line",
+      smooth: true,
+      symbolSize: 7,
+      showSymbol: true,
+      data: rows.map(function (r) { return r.count; }),
+      lineStyle: { width: 2.4, color: "#2866a5" },
+      itemStyle: { color: "#2866a5" },
+      emphasis: {
+        focus: "series",
+        scale: 1.8,
+        itemStyle: { color: "#dfaa61", borderColor: "#fff", borderWidth: 2 }
       },
-      series: [{
-        type: 'bar',
-        data: data.map((r) => r.count),
-        barMaxWidth: 18,
-        itemStyle: { borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: '#6b7280', fontSize: 11 },
-      }],
-    });
+      areaStyle: {
+        color: {
+          type: "linear", x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: "rgba(40,102,165,.24)" },
+            { offset: 1, color: "rgba(40,102,165,.02)" }
+          ]
+        }
+      }
+    }];
+    return option;
   }
 
-  function renderCohort(rows) {
-    const chart = makeChart('chart-cohort');
-    if (!chart) return fallbackBar('chart-cohort', rows, ' 人');
-    chart.setOption({
-      color: ['#1d4ed8'],
-      grid: GRID,
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: rows.map((r) => r.value + '届'),
-        axisLabel: AXIS_LABEL,
-        axisLine: { lineStyle: { color: '#e3e6ea' } },
-      },
-      yAxis: { type: 'value', axisLabel: AXIS_LABEL, splitLine: SPLIT_LINE },
-      series: [{
-        type: 'line',
-        smooth: true,
-        symbolSize: 7,
-        data: rows.map((r) => r.count),
-        areaStyle: {
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{ offset: 0, color: 'rgba(29,78,216,.28)' }, { offset: 1, color: 'rgba(29,78,216,.02)' }],
-          },
-        },
-        label: { show: true, position: 'top', color: '#6b7280', fontSize: 11 },
-      }],
-    });
-  }
-
-  function renderCategory(rows) {
-    const chart = makeChart('chart-category');
-    if (!chart) return fallbackBar('chart-category', rows, ' 人');
-    chart.setOption({
-      color: PALETTE,
-      tooltip: { trigger: 'item', formatter: '{b}：{c} 人（{d}%）' },
-      legend: { bottom: 0, icon: 'circle', textStyle: { color: '#4b5563', fontSize: 12 } },
-      series: [{
-        type: 'pie',
-        radius: ['42%', '68%'],
-        center: ['50%', '44%'],
-        avoidLabelOverlap: true,
-        itemStyle: { borderColor: '#fff', borderWidth: 2 },
-        label: { formatter: '{b}\n{d}%', color: '#4b5563', fontSize: 12 },
-        data: rows.map((r) => ({ name: r.value, value: r.count })),
-      }],
-    });
-  }
-
-  function renderCollege(rows) {
-    const chart = makeChart('chart-college');
-    const data = rows.slice().reverse();
-    if (!chart) return fallbackBar('chart-college', rows);
-    chart.setOption({
-      grid: GRID,
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      xAxis: { type: 'value', axisLabel: AXIS_LABEL, splitLine: SPLIT_LINE },
-      yAxis: {
-        type: 'category',
-        data: data.map((r) => r.value),
-        axisLabel: Object.assign({}, AXIS_LABEL, { interval: 0 }),
-        axisLine: { lineStyle: { color: '#e3e6ea' } },
-      },
-      series: [{
-        type: 'bar',
-        data: data.map((r) => r.count),
-        barMaxWidth: 16,
+  function barOption(rows, horizontal) {
+    var option = baseOption();
+    option.grid = { left: 8, right: 30, top: 16, bottom: 6, containLabel: true };
+    option.tooltip = { trigger: "axis", confine: true, borderColor: LINE };
+    var names = rows.map(function (r) { return r.value; });
+    var counts = rows.map(function (r) { return r.count; });
+    var category = {
+      type: "category",
+      data: names,
+      axisLabel: axisLabel(),
+      axisLine: { lineStyle: { color: LINE } }
+    };
+    var value = { type: "value", axisLabel: axisLabel(), splitLine: splitLine() };
+    option.xAxis = horizontal ? value : category;
+    option.yAxis = horizontal
+      ? Object.assign({}, category, { data: names.slice().reverse(), inverse: false })
+      : value;
+    option.series = [{
+      type: "bar",
+      barMaxWidth: 16,
+      data: horizontal ? counts.slice().reverse() : counts,
+      itemStyle: { borderRadius: horizontal ? [0, 6, 6, 0] : [6, 6, 0, 0], color: "#4c8fca" },
+      emphasis: {
+        focus: "self",
         itemStyle: {
-          borderRadius: [0, 4, 4, 0],
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-            colorStops: [{ offset: 0, color: '#6d8dfb' }, { offset: 1, color: '#1d4ed8' }],
-          },
-        },
-        label: { show: true, position: 'right', color: '#6b7280', fontSize: 11 },
-      }],
-    });
+          color: "#2866a5",
+          shadowBlur: 12,
+          shadowColor: "rgba(40,102,165,.28)"
+        }
+      }
+    }];
+    return option;
   }
 
-  function renderDegree(rows) {
-    const chart = makeChart('chart-degree');
-    if (!chart) return fallbackBar('chart-degree', rows, ' 人');
-    chart.setOption({
-      color: ['#38bdf8', '#6d8dfb', '#1d4ed8'],
-      tooltip: { trigger: 'item', formatter: '{b}：{c} 人（{d}%）' },
-      legend: { bottom: 0, icon: 'circle', textStyle: { color: '#4b5563', fontSize: 12 } },
-      series: [{
-        type: 'pie',
-        radius: ['50%', '70%'],
-        center: ['50%', '44%'],
-        itemStyle: { borderColor: '#fff', borderWidth: 2 },
-        label: { formatter: '{b} {c}', color: '#4b5563', fontSize: 12 },
-        data: rows.map((r) => ({ name: r.value, value: r.count })),
-      }],
-    });
-  }
-
-  function renderCity(rows) {
-    const chart = makeChart('chart-city');
-    const data = rows.slice().reverse();
-    if (!chart) return fallbackBar('chart-city', rows);
-    chart.setOption({
-      color: ['#2dd4bf'],
-      grid: GRID,
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      xAxis: { type: 'value', axisLabel: AXIS_LABEL, splitLine: SPLIT_LINE },
-      yAxis: {
-        type: 'category',
-        data: data.map((r) => r.value),
-        axisLabel: Object.assign({}, AXIS_LABEL, { interval: 0 }),
-        axisLine: { lineStyle: { color: '#e3e6ea' } },
+  function pieOption(rows) {
+    var option = baseOption();
+    option.tooltip = { trigger: "item", confine: true, borderColor: LINE, formatter: "{b}：{c} 条（{d}%）" };
+    option.legend = {
+      bottom: 0,
+      icon: "circle",
+      itemWidth: 8,
+      itemHeight: 8,
+      textStyle: { color: TEXT, fontSize: 11 }
+    };
+    option.series = [{
+      type: "pie",
+      radius: ["46%", "72%"],
+      center: ["50%", "44%"],
+      avoidLabelOverlap: true,
+      itemStyle: { borderColor: "#fff", borderWidth: 2 },
+      label: { color: TEXT, fontSize: 11, formatter: "{b}\n{d}%" },
+      labelLine: { lineStyle: { color: LINE } },
+      emphasis: {
+        focus: "self",
+        scale: true,
+        scaleSize: 8,
+        itemStyle: { shadowBlur: 14, shadowColor: "rgba(29,79,120,.24)" }
       },
-      series: [{
-        type: 'bar',
-        data: data.map((r) => r.count),
-        barMaxWidth: 16,
-        itemStyle: { borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', color: '#6b7280', fontSize: 11 },
-      }],
+      data: rows.map(function (r) { return { name: r.value, value: r.count }; })
+    }];
+    return option;
+  }
+
+  // -------------------------------------------------------- CSS 降级渲染 //
+  function fallbackHTML(rows) {
+    var max = rows.reduce(function (acc, r) { return Math.max(acc, r.count); }, 1);
+    return '<div class="rank">' + rows.map(function (row) {
+      var width = Math.max(6, Math.round((row.count / max) * 100));
+      return '<div class="rank-row">' +
+        '<span class="nm" title="' + IRS.esc(row.value) + '">' + IRS.esc(row.value) + "</span>" +
+        '<span class="track"><span class="fill" style="width:' + width + '%"></span></span>' +
+        '<span class="cnt">' + IRS.num(row.count) + "</span>" +
+        "</div>";
+    }).join("") + "</div>";
+  }
+
+  function hideFallback() {
+    ["cohort", "province", "position", "degree", "city", "college"].forEach(function (key) {
+      var box = document.getElementById("fallback-" + key);
+      if (box) box.hidden = true;
     });
   }
+
+  function showFallback(rows) {
+    var pairs = [
+      ["cohort", rows.cohort, "届别"],
+      ["province", rows.province, "省份"],
+      ["position", rows.position_category, "岗位类别"],
+      ["degree", rows.degree_level, "学历层次"],
+      ["city", rows.city, "城市"],
+      ["college", rows.college, "学院"]
+    ];
+    pairs.forEach(function (pair) {
+      var key = pair[0];
+      var canvas = document.getElementById("chart-" + key);
+      var box = document.getElementById("fallback-" + key);
+      if (canvas) canvas.hidden = true;
+      if (!box) return;
+      var list = (pair[1] || []).map(function (item) {
+        return {
+          value: key === "cohort" ? item.value + " 届" : item.value,
+          count: item.count
+        };
+      });
+      if (!list.length) {
+        box.hidden = false;
+        box.innerHTML = '<p class="muted">暂无数据</p>';
+        return;
+      }
+      box.hidden = false;
+      box.innerHTML = fallbackHTML(list);
+    });
+    IRS.toast("图表库未加载，已切换为简易条形图", 3000);
+  }
+
+  // ---------------------------------------------------------------- 渲染 //
+  function renderKpis(data) {
+    var box = $("#kpis");
+    if (!box) return;
+    var s = data.summary || {};
+    var cards = [
+      { k: "收录记录", v: s.records, unit: "条", note: "来自公开通知公告的画像记录" },
+      { k: "通知原图", v: s.images, unit: "张", note: "OCR 原始图片数" },
+      { k: "去向省份", v: s.provinces, unit: "个", note: "识别到省份的记录覆盖" },
+      { k: "覆盖学院", v: s.colleges, unit: "个", note: "出现过的学院数" },
+      { k: "去向城市", v: s.cities, unit: "个", note: "出现过的城市数" },
+      { k: "覆盖届别", v: s.cohorts, unit: "届", note: "数据覆盖的年份跨度" }
+    ];
+    box.innerHTML = cards.map(function (card) {
+      return '<div class="kpi">' +
+        '<span class="k">' + IRS.esc(card.k) + "</span>" +
+        '<div class="v">' + IRS.num(card.v || 0) + '<span class="unit">' + card.unit + "</span></div>" +
+        '<div class="note">' + IRS.esc(card.note) + "</div>" +
+        "</div>";
+    }).join("");
+  }
+
+  var FILL_LABELS = {
+    name: "姓名", cohort: "届别", college: "学院", major: "专业",
+    destination_org: "录用单位", city: "城市", position: "岗位方向", province: "省份",
+    degree: "学历（原文）", position_category: "岗位类别", degree_level: "学历层次"
+  };
 
   function renderFillRate(fill) {
-    const labels = Object.keys(fill || {});
-    const values = labels.map((k) => Math.round((fill[k] || 0) * 1000) / 10);
-    const chart = makeChart('chart-fill');
-    const rows = labels.map((k) => ({ value: k, count: values[labels.indexOf(k)] }));
-    if (!chart) return fallbackBar('chart-fill', rows, '%');
-    chart.setOption({
-      grid: { left: 12, right: 30, top: 20, bottom: 8, containLabel: true },
-      tooltip: { trigger: 'axis', formatter: (p) => `${p[0].name}：${p[0].value}%` },
-      xAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%', color: '#4b5563', fontSize: 12 }, splitLine: SPLIT_LINE },
-      yAxis: {
-        type: 'category',
-        data: labels,
-        axisLabel: Object.assign({}, AXIS_LABEL, { interval: 0 }),
-        axisLine: { lineStyle: { color: '#e3e6ea' } },
-      },
-      series: [{
-        type: 'bar',
-        data: values,
-        barMaxWidth: 14,
-        itemStyle: {
-          borderRadius: [0, 4, 4, 0],
-          color: (p) => (p.value >= 80 ? '#34d399' : p.value >= 50 ? '#fbbf24' : '#f87171'),
-        },
-        label: { show: true, position: 'right', formatter: '{c}%', color: '#6b7280', fontSize: 11 },
-      }],
-    });
-  }
-
-  /* --------------------------- KPI 卡片 --------------------------- */
-  function renderKpis(data) {
-    const s = data.summary || {};
-    const cards = [
-      { label: '去向记录', value: s.records },
-      { label: '通知图片', value: s.images },
-      { label: '涉及省份', value: s.provinces },
-      { label: '涉及学院', value: s.colleges },
-      { label: '去向城市', value: s.cities },
-      { label: '届别数量', value: s.cohorts },
-    ];
-    $('#kpis').innerHTML = cards.map((c) => `
-      <div class="kpi">
-        <div class="label">${IRS.esc(c.label)}</div>
-        <div class="value">${IRS.num(c.value || 0)}</div>
-      </div>`).join('');
-  }
-
-  function renderLegends() {
-    document.querySelectorAll('.legend').forEach((el) => el.remove());
-  }
-
-  /* --------------------------- 启动 --------------------------- */
-  async function boot() {
-    try {
-      // 数据请求与 ECharts 加载并行：即使 CDN 完全不可达，也最多等 ECHARTS_TIMEOUT 后降级渲染。
-      const [data] = await Promise.all([
-        IRS.getJSON('/stats', { top_n: 15 }),
-        loadECharts(ECHARTS_TIMEOUT),
-      ]);
-      renderKpis(data);
-      renderProvince(data.province || []);
-      renderCohort(data.cohort || []);
-      renderCategory(data.position_category || []);
-      renderCollege(data.college || []);
-      renderDegree(data.degree_level || []);
-      renderCity(data.city || []);
-      renderFillRate(data.fill_rate || {});
-
-      const s = data.summary || {};
-      $('#stats-sub').textContent = hasECharts
-        ? `数据范围：全部 ${IRS.num(s.records)} 条记录 / ${IRS.num(s.images)} 张通知图片`
-        : `数据范围：全部 ${IRS.num(s.records)} 条记录 / ${IRS.num(s.images)} 张通知图片`
-          + '（ECharts CDN 不可用，已降级为内置条形图）';
-
-      window.addEventListener('resize', IRS.debounce(resizeAll, 150));
-    } catch (err) {
-      $('#stats-sub').textContent = '加载失败：' + err.message;
-      IRS.toast('统计加载失败：' + err.message, 4000);
+    var box = $("#fill-bars");
+    if (!box) return;
+    var entries = Object.keys(fill || {}).map(function (key) {
+      return { key: key, label: FILL_LABELS[key] || key, rate: Number(fill[key]) || 0 };
+    }).sort(function (a, b) { return b.rate - a.rate; });
+    if (!entries.length) {
+      box.innerHTML = '<p class="muted">暂无数据</p>';
+      return;
     }
+    box.innerHTML = entries.map(function (entry) {
+      var width = Math.max(2, Math.round(entry.rate * 100));
+      return '<div class="bar-row">' +
+        '<span class="label">' + IRS.esc(entry.label) + "</span>" +
+        '<span class="track"><span class="fill" style="width:' + width + '%"></span></span>' +
+        '<span class="val">' + Math.round(entry.rate * 100) + "%</span>" +
+        "</div>";
+    }).join("");
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();   // 脚本被延迟/晚于 DOMContentLoaded 执行时的兜底
+  function renderCharts(data) {
+    if (chartsDone || !window.echarts) return;
+    chartsDone = true;
+    hideFallback();
+    initChart("chart-cohort", cohortOption(data.cohort || []));
+    initChart("chart-province", barOption(data.province || [], true));
+    initChart("chart-position", pieOption(data.position_category || []));
+    initChart("chart-degree", pieOption(data.degree_level || []));
+    initChart("chart-city", barOption(data.city || [], true));
+    initChart("chart-college", barOption(data.college || [], true));
+    window.addEventListener("resize", IRS.debounce(function () {
+      charts.forEach(function (chart) { chart.resize(); });
+    }, 180));
   }
+
+  // ---------------------------------------------------------------- 启动 //
+  IRS.ready(function () {
+    IRS.getJSON(IRS.API + "/stats", { top_n: 15 })
+      .then(function (data) {
+        stats = data;
+        renderKpis(data);
+        renderFillRate(data.fill_rate);
+        return loadECharts()
+          .then(function () { renderCharts(data); })
+          .catch(function () {
+            // CDN 慢到超时不代表一定失败：真的加载成功就用图表，否则降级。
+            if (window.echarts) { renderCharts(data); return; }
+            showFallback(data);
+            if (pendingScript) {
+              pendingScript.addEventListener("load", function () {
+                if (window.echarts) { renderCharts(data); IRS.toast("图表库已就绪，已切换为图表", 2000); }
+              });
+            }
+          });
+      })
+      .catch(function (err) {
+        var box = $("#kpis");
+        if (box) {
+          box.innerHTML = '<div class="kpi"><span class="k">加载失败</span>' +
+            '<div class="v">—</div><div class="note">' + IRS.esc(err.message) + "</div></div>";
+        }
+        IRS.toast("统计数据加载失败：" + err.message, 3200);
+      });
+  });
 })();

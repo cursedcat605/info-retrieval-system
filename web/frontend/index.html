@@ -1,86 +1,194 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>选调生去向信息检索系统</title>
-<link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>远帆 · 选调生去向档案</title>
+<meta name="description" content="基于门户公开通知公告整理的研究生选调生去向检索系统：关键词/拼音检索、多条件筛选、去向统计。">
+<!-- 静态资源带版本号：改过前端 js/css 后把 ?v= 的数字加一，浏览器就会绕过旧缓存。
+     旧缓存曾让首页统计面板整块留白（旧版 common.js 没有 IRS 命名空间）。 -->
+<link rel="stylesheet" href="/styles.css?v=5">
 </head>
-<body>
+<body data-page="home">
 
-<header class="topbar">
-  <div class="brand"><span class="logo">选</span><span>选调生去向信息检索</span></div>
-  <nav>
-    <a href="/" class="active">检索</a>
-    <a href="/stats.html">统计分析</a>
-  </nav>
+<header class="top">
+  <div class="inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">远</span>
+      <span class="txt">
+        <span class="name">远帆 · 选调生去向档案</span>
+        <span class="sub">GRADUATE DESTINATION ARCHIVE</span>
+      </span>
+    </a>
+    <form class="quick" role="search" onsubmit="return false">
+      <input type="search" placeholder="快速查找姓名、单位或地区" aria-label="快速查找">
+      <span class="hint" aria-hidden="true">回车</span>
+      <button type="button" aria-label="检索">→</button>
+    </form>
+    <span class="stamp" data-records></span>
+    <nav>
+      <a href="/" class="active">检索</a>
+      <a href="/stats.html">统计分析</a>
+    </nav>
+  </div>
 </header>
 
-<div class="layout">
+<main>
+  <!-- ---------------------------------------------------------------- 主视觉 -->
+  <section class="hero">
+    <div class="rings" aria-hidden="true"><i></i><i></i><i></i></div>
+    <svg class="campus" viewBox="0 0 500 330" fill="none" aria-hidden="true">
+      <path d="M28 302h439M66 290V165l181-93 183 93v125M48 167h397M82 151l165-84 168 84M106 290v-88h283v88M118 196v-17h29v17m18 0v-17h29v17m18 0v-17h29v17m18 0v-17h29v17m18 0v-17h29v17m18 0v-17h29v17M125 290v-63h50v63m28 0v-63h50v63m28 0v-63h50v63m28 0v-63h27v63M229 290v-74a18 18 0 0 1 36 0v74M247 67V35m-11 0h22M87 150v-19m-8 0h16m306 19v-19m-8 0h16M48 305c42-11 61 13 99 0s65 12 102 0 64 12 101 0 67 10 117 0" stroke="#d7e8f4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M55 304c8-27 21-36 38-43m-28 44c-2-22 4-35 17-49m300 48c7-29 20-41 39-49m-26 48c0-21 6-37 19-50" stroke="#9cc7df" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="247" cy="33" r="2.5" fill="#e1bf88"/>
+      <path d="m263 42 16-9m-24-7 5-16" stroke="#e1bf88" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
 
-  <!-- ============ 左侧：筛选面板 ============ -->
-  <aside class="sidebar">
-    <h2>已选条件</h2>
-    <div id="tagbar" class="tagbar"></div>
+    <div class="eyebrow">选调生去向档案 · 公开信息整理</div>
+    <h1>看见每一份奔赴，<em>也看见更远的方向。</em></h1>
+    <p class="note">把方向，交还给自己 —— 数据仅来自公开通知公告，不涉及任何个人信息。</p>
 
-    <h2 style="margin-top:14px;">筛选条件</h2>
-    <div id="facets">
-      <div class="facet-group"><div style="color:#6b7280;font-size:13px;padding:6px 0;">筛选条件加载中…</div></div>
+    <form class="searchbox" id="hero-search" role="search">
+      <input id="hero-q" type="search" placeholder="输入姓名、学院、专业或去向省份…" autocomplete="off" aria-label="检索关键词">
+      <button class="help-btn js-help-open" type="button" aria-expanded="false" aria-controls="search-help" aria-label="检索与多维筛选说明" title="检索与多维筛选说明"><span class="help-icon" aria-hidden="true">?</span></button>
+      <button class="go" type="submit">开始检索</button>
+    </form>
+
+    <div class="hot" id="hero-hot">
+      <span>大家在搜</span>
     </div>
+  </section>
 
-    <!-- 筛选面板底部的提交按钮：分面组很长时也能随手点到 -->
-    <div class="sidebar-actions">
-      <div id="filter-hint" class="filter-hint" hidden>筛选条件已修改，点击「搜索」查看结果</div>
-      <button type="button" class="btn" data-search>搜索</button>
-    </div>
-  </aside>
+  <!-- -------------------------------------------------------------- 数据概览 -->
+  <section class="section-head">
+    <span class="mark" aria-hidden="true"></span>
+    <h2>一眼看见去向全貌</h2>
+    <a class="more" href="/stats.html">统计分析 →</a>
+  </section>
 
-  <!-- ============ 右侧：检索与结果 ============ -->
-  <section>
-    <div class="searchbar">
-      <input id="q" type="search" autocomplete="off" spellcheck="false"
-             placeholder="输入姓名 / 拼音 / 学院 / 专业 / 省份 / 单位…" />
-      <button id="btn-search" class="btn" data-search>搜索</button>
-      <!-- 详细用法收进问号里，避免正文堆一段说明 -->
-      <button id="btn-help" class="help-btn" type="button"
-              aria-label="检索使用说明" aria-expanded="false" title="检索使用说明">?</button>
-      <div id="suggest" class="suggest"></div>
-    </div>
+  <section class="dash">
+    <article class="panel">
+      <h3>数据概览 <span class="tail">基于已收录公开信息</span></h3>
+      <div class="metrics" id="home-metrics"></div>
+      <div class="bars" id="home-bars"></div>
+      <p class="meta-note" id="home-bars-foot"></p>
+    </article>
 
-    <div id="search-help" class="help-pop" hidden>
-      <h3>检索使用说明</h3>
-      <ul>
-        <li><b>关键词</b>：姓名、学院、专业、省份、城市、单位、岗位都能搜。中文 3 字及以上走全文索引，1~2 字走模糊匹配。</li>
-        <li><b>拼音</b>：<kbd>zhangsan</kbd> 全拼、<kbd>zs</kbd> 声母缩写均可命中「张三」；输入 1~2 个字母时按声母前缀匹配。</li>
-        <li><b>多个关键词</b>：用空格（逗号、顿号、<kbd>+</kbd>、<kbd>|</kbd> 也行）分隔，默认为「与」，即都要命中；若没有记录同时命中全部关键词，会自动放宽为「或」。</li>
-        <li><b>筛选条件</b>：勾选后需要点击「搜索」才会生效。同一维度内的多个值是「或」，不同维度之间是「与」。</li>
-        <li><b>结果列表</b>：可用「卡片 / 表格」切换展示形式，用「排序方式」「每页条数」调整排版；点击卡片右下角「查看详情」可看原图。</li>
-      </ul>
-      <p class="muted">数据来自各学院公开的毕业生去向分享海报，字段由 OCR 自动抽取，个别字段可能缺失或有误，仅供参考。</p>
-    </div>
-
-    <div class="toolbar">
-      <span id="summary" class="summary">准备就绪</span>
-      <div class="spacer"></div>
-      <div class="viewswitch" id="viewswitch">
-        <button data-view="card" class="active">卡片</button>
-        <button data-view="table">表格</button>
+    <article class="panel flow">
+      <h3>去向流向 <span class="tail">示意 · 按公开记录整理</span></h3>
+      <svg id="province-map" viewBox="0 0 520 350" fill="none" aria-label="中国轮廓及各省选调生记录分布图" role="img">
+        <path class="china-outline" d="M45 82 62 69 82 74 96 58 121 64 139 52 162 58 179 70 197 63 212 76 232 74 244 88 262 85 275 96 296 90 311 101 330 96 344 107 362 104 375 117 391 115 401 127 419 130 426 144 441 149 446 164 461 169 458 183 448 192 444 208 432 216 425 232 410 237 398 254 380 250 367 263 350 258 337 273 320 267 307 281 290 277 276 292 260 285 245 299 227 294 211 281 196 276 184 262 169 258 157 245 140 243 130 228 112 228 107 212 91 207 95 190 79 181 86 165 72 154 78 139 62 133 67 117 51 107 56 94Z" fill="#f5f9fb" stroke="#91b3ca" stroke-width="1.5" stroke-linejoin="round"/>
+        <path class="island-outline" d="M386 239q7-12 13-4l-2 20-8 12-5-12zM299 294q5-7 10-1l-2 9-7 3-4-5z" fill="#f5f9fb" stroke="#91b3ca" stroke-width="1.2"/>
+        <g id="province-map-pins" aria-label="省份记录数量"></g>
+      </svg>
+      <div class="legend">
+        <span><i></i>记录集中地</span>
+        <span><i></i>其他去向</span>
+        <span class="muted">省份位置为近似地理落点 · 气泡大小对应记录数</span>
       </div>
-      <select id="sort" title="排序方式"></select>
-      <select id="page-size" title="每页条数">
-        <option value="10">每页 10 条</option>
-        <option value="20" selected>每页 20 条</option>
-        <option value="50">每页 50 条</option>
-        <option value="100">每页 100 条</option>
-      </select>
-    </div>
+      <div class="rank" id="home-rank" style="margin-top:16px"></div>
+    </article>
+  </section>
 
-    <div id="results"></div>
-    <div id="pager" class="pager"></div>
+  <!-- -------------------------------------------------------------- 最近收录 -->
+  <section class="section-head">
+    <span class="mark" aria-hidden="true"></span>
+    <h2>最近收录</h2>
+    <span class="result-count" id="home-count"></span>
+    <a class="more" href="/search.html">查看全部 →</a>
+  </section>
+
+  <div class="chips" id="home-chips"></div>
+
+  <section class="dash">
+    <div>
+      <div class="cards" id="home-records"></div>
+      <div class="empty" id="home-empty" hidden>
+        <span class="big" aria-hidden="true">◍</span>
+        还没有可展示的记录
+        <p class="hint">数据库可能尚未构建，请先运行 <code>scripts/build_database.py</code>。</p>
+      </div>
+    </div>
+    <aside class="panel">
+      <h3>大家都去向哪里 <span class="tail">热门目的地</span></h3>
+      <div class="rank" id="home-side-rank"></div>
+      <div class="rule" style="height:1px;background:var(--line-soft);margin:18px 0 14px"></div>
+      <p class="meta-note" style="margin:0">
+        点击任一目的地即可带着筛选条件进入检索页，继续按学院、学历、岗位类别细化。
+      </p>
+    </aside>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="inner">
+    <span class="proj">远帆 · 选调生去向档案</span>
+    <span>数据来源：门户公开通知公告（OCR + 字段抽取）</span>
+    <span class="spacer"></span>
+    <a href="/stats.html">统计分析</a>
+    <a href="/search.html">多维筛选</a>
+  </div>
+</footer>
+
+<div class="help-overlay" id="search-help" hidden>
+  <section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="search-help-title" tabindex="-1">
+    <button class="help-close" type="button" aria-label="关闭说明">×</button>
+    <div class="help-kicker">SEARCH GUIDE</div>
+    <h2 id="search-help-title">检索与多维筛选说明</h2>
+    <p class="help-intro">从关键词快速定位档案，也可以逐步组合筛选条件。</p>
+    <div class="help-columns">
+      <section><h3><span>01</span> 关键词检索</h3>
+        <ul>
+          <li><b>支持字段</b>：姓名、学院、专业、届别、学历、省份、城市、单位与岗位方向。</li>
+          <li><b>拼音与简称</b>：支持姓名全拼、首字母和维护过的简称，例如“信工”。</li>
+          <li><b>多个词</b>：用空格、逗号、顿号、<kbd>+</kbd> 或 <kbd>|</kbd> 分隔。系统优先同时匹配，暂无结果时会放宽匹配。</li>
+          <li><b>搜索建议</b>：输入后可用 ↑ ↓ 选择建议，回车确认；检索结果中的高亮会说明命中的词。</li>
+        </ul>
+      </section>
+      <section><h3><span>02</span> 多维筛选</h3>
+        <ul>
+          <li>在左侧展开省份、岗位类别、学历、届别、学院、专业或城市，勾选一个或多个选项。</li>
+          <li><b>同一维度</b>内多选按“满足任一项”匹配；<b>不同维度</b>之间按“同时满足”组合。</li>
+          <li>勾选后点击左侧“查看结果”应用。顶部条件标签可单独移除，也可清空全部条件。</li>
+          <li>可调整排序、每页条数，并在卡片与表格视图之间切换。</li>
+        </ul>
+      </section>
+    </div>
+    <p class="help-note">信息来自学校及相关单位公开发布内容，字段由 OCR 辅助整理，个别记录可能缺失或有误。</p>
+    <button class="help-done" type="button">知道了</button>
   </section>
 </div>
 
-<script src="/common.js"></script>
-<script src="/app.js"></script>
+<script>
+// 前端出问题时在页面上说清楚，别再让「整块空白」这种无声故障出现
+(function () {
+  function show(text) {
+    var host = document.querySelector("main");
+    if (!host) return;
+    var box = document.getElementById("front-error");
+    if (!box) {
+      box = document.createElement("p");
+      box.id = "front-error";
+      box.className = "front-error";
+      host.insertBefore(box, host.firstChild);
+    }
+    box.textContent = text;
+  }
+  window.addEventListener("error", function (e) {
+    var el = e && e.target;
+    if (el && el.tagName === "SCRIPT") {
+      show("页面脚本加载失败：" + (el.src || "") + "　请按 Ctrl+F5 强制刷新");
+    } else if (e && e.message) {
+      show("页面脚本运行出错：" + e.message + "　请按 Ctrl+F5 强制刷新");
+    }
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var reason = e && e.reason;
+    show("页面请求失败：" + ((reason && reason.message) || reason || "未知错误"));
+  });
+})();
+</script>
+<script src="/common.js?v=5"></script>
+<script src="/home.js?v=5"></script>
 </body>
 </html>
