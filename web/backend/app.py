@@ -143,6 +143,24 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.middleware("http")
+    async def _revalidate_frontend(request: Request, call_next):
+        """前端页面/脚本/样式强制协商缓存（``no-cache`` = 缓存但每次回源校验）。
+
+        Starlette 的 ``StaticFiles`` 只发 ``ETag`` / ``Last-Modified``、不发
+        ``Cache-Control``，浏览器于是按「启发式缓存」把 ``app.js`` 长期压在本地。
+        结果改了前端代码后用户刷新页面仍在跑旧脚本——「搜索框输入后仍返回全部
+        记录」「筛选器展开更多点了没反应」两个 bug 的修复就曾被旧缓存掩盖过一次。
+        文件没变时回源只会得到一个 304，成本可忽略；``/images`` 下是大图，保持可缓存。
+        """
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/images/"):
+            return response
+        if path in ("", "/") or path.endswith((".html", ".js", ".css")):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     # ---------------- 前端启动字典 ---------------- #
     @app.get("/api/config", summary="前端字典：维度、排序、分页")
     def api_config() -> Dict[str, Any]:

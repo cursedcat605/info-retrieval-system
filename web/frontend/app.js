@@ -92,6 +92,10 @@
   /* ------------------------------------------------------------------ */
   async function run(page) {
     if (page) state.page = page;
+    // 搜索框是关键词的唯一真相来源：不读回来就会永远用 boot() 时的空值，
+    // 导致无论输入什么都只返回全部记录（q 根本不会出现在请求 URL 里）。
+    const qEl = $('#q');
+    if (qEl) state.q = qEl.value.trim();
     const payload = IRS.searchParams(state, state.dimensions);
     payload.page = state.page;
     payload.page_size = state.page_size;
@@ -122,8 +126,16 @@
   /* 分面筛选面板                                                        */
   /* ------------------------------------------------------------------ */
   const FACET_PREVIEW = 8;
+  const groupOpen = {};   // {dim: bool} 分面组的展开状态，以 DOM 为准
 
   function renderFacets(data) {
+    // 重建 DOM 会丢掉 <details> 的 open 状态。以前只用「是否有已选条件」决定是否展开，
+    // 于是用户点「展开更多」后整组立刻被折叠，看起来像按钮点了没反应。
+    // 这里在渲染前把用户当前的展开/收起状态快照下来，下一轮渲染原样还原。
+    document.querySelectorAll('#facets details.facet-group').forEach((el) => {
+      const dim = el.querySelector('.facet-options')?.dataset.dim;
+      if (dim) groupOpen[dim] = el.open;
+    });
     const groups = state.dimensions.map((dim) => {
       const options = IRS.sortOptions(data.facets[dim] || []);
       const selectedCount = (state.filters[dim] || []).length;
@@ -131,12 +143,14 @@
       const visible = expanded ? options : options.slice(0, FACET_PREVIEW);
       const rows = visible.map((opt) => facetRow(dim, opt)).join('');
       const more = options.length > FACET_PREVIEW
-        ? `<button class="expand-btn" data-expand="${dim}">${expanded
+        ? `<button type="button" class="expand-btn" data-expand="${dim}">${expanded
             ? '收起' : `展开更多（共 ${options.length} 项）`}</button>`
         : '';
       if (!options.length) return '';
+      // 首次渲染（groupOpen 里还没有该维度）：有已选条件就自动展开，否则折叠
+      const open = groupOpen[dim] !== undefined ? groupOpen[dim] : selectedCount > 0;
       return `
-        <details class="facet-group" ${selectedCount ? 'open' : ''}>
+        <details class="facet-group" ${open ? 'open' : ''}>
           <summary>${IRS.esc(dimLabels[dim] || dim)}
             ${selectedCount ? `<span class="badge">已选 ${selectedCount}</span>` : ''}
           </summary>
