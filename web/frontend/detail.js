@@ -1,7 +1,7 @@
 /* =========================================================================
    信息详情页面（需求十四）
-   三栏：基本信息 | 选调生信息 | 来源信息
-   另附：原文全文、原始图片、识别证据（LLM/规则抽取的原文出处）
+   字段区（基本信息 / 选调生信息 / 来源信息）+ 原始图片
+   另附：识别证据（LLM/规则抽取的原文出处）
    ========================================================================= */
 (function () {
   'use strict';
@@ -32,8 +32,7 @@
       item = await IRS.getJSON('/record/' + encodeURIComponent(id));
     } catch (err) {
       $('#detail-sub').textContent = '加载失败：' + err.message;
-      $('#detail-grid').hidden = false;
-      $('#rawtext').textContent = '—';
+      $('#detail-main').hidden = false;
       return;
     }
 
@@ -58,7 +57,7 @@
     const imgBtn = $('#btn-image');
     imgBtn.href = item.image_local_url || item.image_url || '#';
 
-    /* -------- 三栏 -------- */
+    /* -------- 字段区 -------- */
     $('#col-basic').innerHTML = [
       row('姓名', item.name),
       row('学院', item.college),
@@ -83,32 +82,25 @@
       row('通知标题', item.notice_title),
       row('通知编号', item.notice_id),
       row('信息类型', item.notice_type),
-      row('图片文件', item.image),
-      row('OCR 引擎', item.ocr_engine ? `${item.ocr_engine}（${item.ocr_line_count || 0} 行）` : ''),
     ].join('');
 
-    /* -------- 原文全文 -------- */
-    const text = item.source_text || item.raw_text || '';
-    $('#rawtext').textContent = text || '（未找到该图片的 OCR 文本）';
-    $('#rawtext-note').textContent = item.source_text
-      ? `来源：${item.image} 的 OCR 全文（共 ${text.replace(/\s/g, '').length} 字）`
-      : '来源：本条记录命中的文本块（整图文本不可用）';
-
-    /* -------- 原图 -------- */
+    /* -------- 原图（详情页只展示可选中的证据）-------- */
     const imgUrl = item.image_local_url || item.image_url || '';
     const thumb = $('#image-thumb');
     if (imgUrl) {
       thumb.src = imgUrl;
+      // 图片本身也是链接：点一下就在新窗口看原图（此前这里一直是 "#"，点了没反应）
+      $('#image-link').href = imgUrl;
       thumb.onerror = () => {
         if (item.image_url && thumb.src !== item.image_url) thumb.src = item.image_url;
         else { $('#image-note').textContent = '本地缓存与门户图片均不可访问。'; }
       };
-      $('#image-note').textContent =
-        `本地缓存：${item.image}｜门户原图：${item.image_url || '—'}`
-        + (item.ocr_mean_score != null ? `｜OCR 平均置信度：${Number(item.ocr_mean_score).toFixed(3)}` : '')
-        + (item.ocr_error ? `｜识别异常：${item.ocr_error}` : '');
+      $('#image-note').textContent = item.ocr_error
+        ? `该图 OCR 识别异常：${item.ocr_error}`
+        : '点击图片可在新窗口查看原图。';
     } else {
       thumb.style.display = 'none';
+      $('#image-link').removeAttribute('href');
       $('#image-note').textContent = '该记录未关联图片。';
     }
 
@@ -119,7 +111,7 @@
       + `抽取置信度：${item.confidence != null ? Number(item.confidence).toFixed(3) : '—'}｜`
       + `记录 ID：${item.id}｜文本块序号：${item.block_index != null ? item.block_index : '—'}`;
 
-    $('#detail-grid').hidden = false;
+    $('#detail-main').hidden = false;
   }
 
   document.addEventListener('DOMContentLoaded', () => {

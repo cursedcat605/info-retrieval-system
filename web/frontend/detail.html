@@ -26,37 +26,30 @@
   </div>
 </div>
 
-<!-- 需求十四：三栏结构 -->
-<div class="detail-grid" id="detail-grid" hidden>
-  <section class="panel">
-    <h3>基本信息</h3>
-    <dl class="kv" id="col-basic"></dl>
-  </section>
-  <section class="panel">
-    <h3>选调生信息</h3>
-    <dl class="kv" id="col-selects"></dl>
-  </section>
-  <section class="panel">
-    <h3>来源信息</h3>
-    <dl class="kv" id="col-source"></dl>
-  </section>
-</div>
-
-<div class="section">
-  <div class="grid2">
+<!-- 需求十四：字段区（左）+ 原图区（右，宽屏下跟随滚动吸附） -->
+<div class="detail-main" id="detail-main" hidden>
+  <div class="detail-facts">
     <section class="panel">
-      <h3>原文文本</h3>
-      <div class="rawtext" id="rawtext">加载中…</div>
-      <div class="meta-note" id="rawtext-note"></div>
+      <h3>基本信息</h3>
+      <dl class="kv" id="col-basic"></dl>
     </section>
     <section class="panel">
-      <h3>原始图片</h3>
-      <a id="image-link" href="#" target="_blank" rel="noopener">
-        <img class="thumb" id="image-thumb" alt="原始通知图片" />
-      </a>
-      <div class="meta-note" id="image-note"></div>
+      <h3>选调生信息</h3>
+      <dl class="kv" id="col-selects"></dl>
+    </section>
+    <section class="panel">
+      <h3>来源信息</h3>
+      <dl class="kv" id="col-source"></dl>
     </section>
   </div>
+
+  <section class="panel detail-image">
+    <h3>原始图片</h3>
+    <a id="image-link" class="zoom" href="#" target="_blank" rel="noopener" title="点击查看原图">
+      <img class="thumb" id="image-thumb" alt="原始通知图片" />
+    </a>
+    <div class="meta-note" id="image-note"></div>
+  </section>
 </div>
 
 <div class="section">

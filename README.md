@@ -189,6 +189,8 @@ flowchart LR
 > 访问它，所以放开限制是安全的）。
 
 > `tests/test_web_static_cache.py` 锁住前端资源的 `Cache-Control: no-cache`。
+> 详情页的展示范围（只给字段与原图，不展示 OCR 全文 / 图片文件名 / OCR 引擎）
+> 由 `tests/test_web_detail_page.py` 锁住。
 > Starlette 的 `StaticFiles` 只发 `ETag` / `Last-Modified`，浏览器会按启发式缓存
 > 把 `app.js` 长期压在本地，改完前端代码刷新页面仍在跑旧脚本。加上该头后浏览器
 > 每次回源校验，文件没变只是一个 304。
@@ -220,7 +222,7 @@ Jupyter Notebook，用于数据分布探索、OCR 效果评估、检索效果调
 | 全文检索 | SQLite FTS5 / Elasticsearch | ✅ FTS5 |
 | Web 服务 | FastAPI（后端）、Vue / React / **原生 HTML**（前端） | ✅ FastAPI + 原生 HTML/JS |
 | 图表 | ECharts（CDN），断网时自动降级为纯 CSS 条形图 | ✅ |
-| 测试 | pytest + FastAPI TestClient | ✅ 115 项 |
+| 测试 | pytest + FastAPI TestClient | ✅ 119 项 |
 | 定时任务 | APScheduler / 系统计划任务 | ⬜ 待实现 |
 
 ---
@@ -254,7 +256,7 @@ python -m web.backend.main          # → http://127.0.0.1:8000
 # 6. 自检（可选）
 python scripts/check_search.py      # 检索层 39 项断言
 python scripts/check_api.py         # HTTP 接口 61 项断言
-python -m pytest tests -q           # 单元 / 集成测试 115 项
+python -m pytest tests -q           # 单元 / 集成测试 119 项
 ```
 
 > 端口、监听地址、允许的 CORS 来源都在 `config/config.yaml` 的 `web:` 段落中配置。
@@ -340,7 +342,7 @@ python -m web.backend.main        # 监听 127.0.0.1:8000
 | 页面 | 地址 | 说明 |
 | --- | --- | --- |
 | 检索首页 | `/` | 搜索框 + 分面筛选 + 卡片/表格切换 |
-| 信息详情 | `/detail.html?id=<记录ID>` | 基本信息 / 选调生信息 / 来源信息 三栏 |
+| 信息详情 | `/detail.html?id=<记录ID>` | 左侧字段（基本信息 / 选调生信息 / 来源信息）+ 右侧原始图片 |
 | 统计分析 | `/stats.html` | 省份、届别、岗位类别、学院等图表 |
 | 接口文档 | `/docs` | FastAPI 自动生成的 Swagger UI（**仅供开发者，不在页面导航中展示**） |
 | 图片原文 | `/images/<文件名>` | 原图直出，详情页可对照 |
@@ -426,7 +428,7 @@ curl "http://127.0.0.1:8000/api/search?sort=name_pinyin&page=2"
 | `scripts/check_search.py` | 不启服务，直接校验检索层：查询解析、分面、排序、分页、高亮 | 39 项全过 |
 | `scripts/check_api.py` | 用 `TestClient` 跑完整 HTTP 链路（含静态资源与 404） | 61 项全过 |
 | `scripts/smoke_live.py` | 对**已启动的真实服务**发请求（需先 `wscript scripts\serve-hidden.vbs` 或 `python -m web.backend.main`） | 6 项全过 |
-| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头 | 115 项全过 |
+| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头、详情页展示范围 | 119 项全过 |
 
 > `smoke_live.py` 的拼音用例默认用占位名 `zhangsan`（仓库内不出现真实姓名）。
 > 若要校验真实数据，先在当前会话设 `$env:SMOKE_PINYIN_QUERY="<姓名全拼>"` 再运行。

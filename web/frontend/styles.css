@@ -462,8 +462,22 @@ table.result td .ellip {
 .panel > h3 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
 .panel > h3::before { content: ""; width: 3px; height: 14px; background: var(--c-brand); border-radius: 2px; }
 
-.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1200px; margin: 16px auto; padding: 0 20px; }
-@media (max-width: 960px) { .detail-grid { grid-template-columns: 1fr; } }
+.detail-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 16px;
+  max-width: 1200px;
+  margin: 16px auto;
+  padding: 0 20px;
+  align-items: start;
+}
+.detail-facts { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* 原图比字段区高，吸附后不用来回滚动就能对着图核对字段 */
+.detail-image { position: sticky; top: 16px; }
+@media (max-width: 960px) {
+  .detail-main { grid-template-columns: 1fr; }
+  .detail-image { position: static; }
+}
 
 .kv { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 6px 10px; font-size: 13.5px; }
 .kv dt { color: var(--c-muted); }
@@ -471,23 +485,19 @@ table.result td .ellip {
 .kv dd.emptyv { color: #b6bcc6; }
 
 .section { max-width: 1200px; margin: 16px auto; padding: 0 20px; }
-.grid2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
-@media (max-width: 960px) { .grid2 { grid-template-columns: 1fr; } }
 
-.rawtext {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font: 13px/1.8 "Consolas", "Courier New", "Microsoft YaHei", monospace;
+/* 原图：整图可见（不裁切），超出视口高度时按视口缩放 */
+.detail-image .zoom { display: block; cursor: zoom-in; }
+.thumb {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 230px);
+  object-fit: contain;
   background: #fbfcfe;
-  border: 1px solid var(--c-border);
   border-radius: 8px;
-  padding: 12px 14px;
-  max-height: 460px;
-  overflow: auto;
-  color: #2b3038;
+  border: 1px solid var(--c-border);
 }
-
-.thumb { display: block; width: 100%; border-radius: 8px; border: 1px solid var(--c-border); }
+.detail-image .zoom:hover .thumb { border-color: #b9c8f5; }
 .meta-note { font-size: 12px; color: var(--c-muted); margin-top: 6px; }
 
 .evidence {
