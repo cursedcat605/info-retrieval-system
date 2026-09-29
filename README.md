@@ -127,6 +127,9 @@ flowchart LR
 - 关键信息抽取：**姓名、届别、所属学院、专业、去向单位、城市、岗位**（核心 7 字段），另附省份、学历、届别年份。
 - `gazetteer.py`：省份/城市/学院/机构后缀/专业等白名单词典，决定“哪些字符串**有可能**是目标字段”。
 - `field_extractor.py`：按“主讲人区块”切分文本并抽取字段，规则只做**裁剪**不做**补全**，每个字段都记录了原文依据。
+  - 学院抽取会先剥掉被 OCR 连行粘进来的身份前缀（`届广东定向选调生文学院` → `文学院`），
+    再把错字对齐已知院系白名单（`民族学与在会学学院` → `民族学与社会学学院`）；
+    对齐不唯一时**保留原样**，方便人工发现新的错字。
 - `pinyin.py`：姓名的全拼 / 声母缩写生成与匹配（`张三` → `zhangsan` / `zs`），支撑拼音搜索。
 - `position_category.py`：由岗位/单位/专业派生“岗位类别”（公务/事业单位、技术研发类、教育类、金融类、其他）与“学历层次”（本科/硕士/博士）。
 - 停用词、同义词、自定义词典（`config/dict/selects_terms.txt`，选调相关术语）。
@@ -179,7 +182,7 @@ flowchart LR
 存放本地 OCR / NLP 模型权重（如 PaddleOCR、分词自定义模型）。体积较大，通常加入 `.gitignore`。
 
 ### 13. `tests/` — 测试
-`pytest` 用例：拼音匹配、岗位分类规则回归、高亮/XSS、检索引擎（筛选·排序·分页·分面·详情）、Web 层数据库连接的线程生命周期、前端静态资源缓存头。
+`pytest` 用例：拼音匹配、岗位分类规则回归、学院抽取、高亮/XSS、检索引擎（筛选·排序·分页·分面·详情）、Web 层数据库连接的线程生命周期、前端静态资源缓存头。
 数据库以**只读**方式打开（`file:...?mode=ro`），保证测试不会改动生产数据。运行：`python -m pytest tests -q`。
 
 > `tests/test_web_conn.py` 复现 FastAPI 的同步生成器依赖模型：同一次请求里
@@ -187,6 +190,14 @@ flowchart LR
 > 必须用 `connect(..., check_same_thread=False)`，否则并发请求会抛
 > `sqlite3.ProgrammingError` 并返回 500（每个请求独占连接、同一时刻只有一个线程在
 > 访问它，所以放开限制是安全的）。
+
+> `tests/test_college_extraction.py` 锁住学院字段的两条契约：**不得把届别/身份粘进
+> 学院名**，以及**库中不得出现带“选调生”“届/级/年”前缀的脏值**。海报正文里
+> “2024届福建选调生”与“文学院…”本就是两行，但抽取时是把同一段发言的所有格子
+> 直接拼成一串再跑正则，`{2,10}` 的前缀会贪心地把标题一起吃掉；修复后改为
+> “先剥前缀、再白名单模糊对齐”，并让**白名单命中优先于匹配长度**。
+> 改了抽取规则必须重跑 `extract_records.py` + `build_database.py --reset`，
+> 因为 `derive_fields.py` 只补空值，永远不会修正一个非空的错值。
 
 > `tests/test_web_static_cache.py` 锁住前端资源的 `Cache-Control: no-cache`。
 > 详情页的展示范围（只给字段与原图，不展示 OCR 全文 / 图片文件名 / OCR 引擎）
@@ -222,7 +233,7 @@ Jupyter Notebook，用于数据分布探索、OCR 效果评估、检索效果调
 | 全文检索 | SQLite FTS5 / Elasticsearch | ✅ FTS5 |
 | Web 服务 | FastAPI（后端）、Vue / React / **原生 HTML**（前端） | ✅ FastAPI + 原生 HTML/JS |
 | 图表 | ECharts（CDN），断网时自动降级为纯 CSS 条形图 | ✅ |
-| 测试 | pytest + FastAPI TestClient | ✅ 119 项 |
+| 测试 | pytest + FastAPI TestClient | ✅ 134 项 |
 | 定时任务 | APScheduler / 系统计划任务 | ⬜ 待实现 |
 
 ---
@@ -256,7 +267,7 @@ python -m web.backend.main          # → http://127.0.0.1:8000
 # 6. 自检（可选）
 python scripts/check_search.py      # 检索层 39 项断言
 python scripts/check_api.py         # HTTP 接口 61 项断言
-python -m pytest tests -q           # 单元 / 集成测试 119 项
+python -m pytest tests -q           # 单元 / 集成测试 134 项
 ```
 
 > 端口、监听地址、允许的 CORS 来源都在 `config/config.yaml` 的 `web:` 段落中配置。
@@ -428,7 +439,7 @@ curl "http://127.0.0.1:8000/api/search?sort=name_pinyin&page=2"
 | `scripts/check_search.py` | 不启服务，直接校验检索层：查询解析、分面、排序、分页、高亮 | 39 项全过 |
 | `scripts/check_api.py` | 用 `TestClient` 跑完整 HTTP 链路（含静态资源与 404） | 61 项全过 |
 | `scripts/smoke_live.py` | 对**已启动的真实服务**发请求（需先 `wscript scripts\serve-hidden.vbs` 或 `python -m web.backend.main`） | 6 项全过 |
-| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头、详情页展示范围 | 119 项全过 |
+| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头、详情页展示范围、学院抽取 | 134 项全过 |
 
 > `smoke_live.py` 的拼音用例默认用占位名 `zhangsan`（仓库内不出现真实姓名）。
 > 若要校验真实数据，先在当前会话设 `$env:SMOKE_PINYIN_QUERY="<姓名全拼>"` 再运行。

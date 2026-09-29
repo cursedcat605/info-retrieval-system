@@ -119,6 +119,15 @@ _COLLEGE_BANNED = (
     "分享会", "交流会", "经验分享", "沙龙", "座谈会", "讲座", "论坛", "大会",
     "公告", "通知", "海报", "活动", "报告", "招聘", "宣讲", "研究生招生", "就业指导",
 )
+#: 海报上「身份」类引导词。OCR 把整行连成一串时，它们会被并进学院名里：
+#: ``2024届广东定向选调生文学院`` → 正则贪心会抓到 ``届广东定向选调生文学院``。
+#: 取**最靠右**的那个标记作为切割点，剩下的才是院系名。
+_COLLEGE_LEAD_MARKERS: Tuple[str, ...] = ("选调生", "选调")
+#: 切掉引导词后仍可能残留在前面的届别/学历碎片
+_COLLEGE_LEAD_NOISE: Tuple[str, ...] = (
+    "非定向", "定向", "集中", "硕士", "博士", "研究生", "本科生", "本科",
+    "学士", "届", "级", "年", "的", "、", "，", ",", " ",
+)
 #: 城市名的黑名单（避免 "市区" 之类）
 _CITY_BANNED = {"城市", "全市", "市区", "附近", "某市", "本市", "该市", "州市", "地市", "都市", "州市区"}
 #: 正则从词中间起匹配时会被带进城市名的"前缀碎片"（前面那个字段的尾巴）
@@ -366,6 +375,62 @@ def find_name(cells: Sequence[str]) -> Optional[str]:
     return None
 
 
+def _clean_college(value: str, start: int) -> Tuple[str, int]:
+    """剥掉被 OCR 连行粘进来的「届别 + 身份」前缀，返回 ``(新值, 新起点)``。
+
+    ``届广东定向选调生文学院`` → ``文学院``（起点相应右移，保证区间仍然指向正文）。
+    没有可剥的碎片时原样返回，绝不切掉院系名本身的字。
+    """
+    cut = 0
+    for marker in _COLLEGE_LEAD_MARKERS:
+        pos = value.rfind(marker)
+        if pos >= 0:
+            cut = max(cut, pos + len(marker))
+    if cut:
+        value = value[cut:]
+        start += cut
+    while True:
+        for noise in _COLLEGE_LEAD_NOISE:
+            if len(value) > len(noise) and value.startswith(noise):
+                value = value[len(noise):]
+                start += len(noise)
+                break
+        else:
+            return value, start
+
+
+def _levenshtein(a: str, b: str, limit: int = 1) -> int:
+    """带上限的编辑距离；超过 ``limit`` 直接返回 ``limit + 1``。"""
+    if abs(len(a) - len(b)) > limit:
+        return limit + 1
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, start=1):
+        cur = [i]
+        for j, cb in enumerate(b, start=1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        if min(cur) > limit:
+            return limit + 1
+        prev = cur
+    return prev[-1]
+
+
+def _fuzzy_known_college(value: str) -> Optional[str]:
+    """把 OCR 错字的院系名对齐到白名单（编辑距离 ≤1 且唯一命中）。
+
+    ``民族学与在会学学院`` → ``民族学与社会学学院``、``信息与工程学院`` → ``信息工程学院``。
+    命中不唯一时**不猜**，宁可保留原样也不要写错一个学院。
+    """
+    if len(value) < 4:
+        return None
+    hits: List[str] = []
+    for known in KNOWN_COLLEGES:
+        if abs(len(known) - len(value)) > 1:
+            continue
+        if _levenshtein(value, known, limit=1) <= 1:
+            hits.append(known)
+    return hits[0] if len(hits) == 1 else None
+
+
 def find_college(text: str) -> Tuple[Optional[str], Optional[Tuple[int, int]]]:
     """返回 ``(学院名, 位置区间)``。优先命中已知院系白名单。"""
     known = _spans(text, KNOWN_COLLEGES)
@@ -374,15 +439,17 @@ def find_college(text: str) -> Tuple[Optional[str], Optional[Tuple[int, int]]]:
         return value, (idx, end)
 
     candidates: List[Tuple[int, int, str]] = []
-    for m in RE_COLLEGE.finditer(text):
-        value = m.group(1)
-        if any(banned in value for banned in _COLLEGE_BANNED):
-            continue
-        if value in {"大学", "学院", "研究院"}:
-            continue
-        candidates.append((m.start(), m.end(), value))
-    for m in RE_DEPARTMENT.finditer(text):
-        candidates.append((m.start(), m.end(), m.group(1)))
+    for pattern in (RE_COLLEGE, RE_DEPARTMENT):
+        for m in pattern.finditer(text):
+            raw = m.group(1)
+            if any(banned in raw for banned in _COLLEGE_BANNED):
+                continue
+            value, offset = _clean_college(raw, m.start())
+            if not value or value in {"大学", "学院", "研究院", "系"}:
+                continue
+            # OCR 错字对齐白名单；对不上就保留原样（人工可据此发现新的错字）
+            value = _fuzzy_known_college(value) or value
+            candidates.append((offset, offset + len(value), value))
 
     if not candidates:
         return None, None
