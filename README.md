@@ -120,8 +120,52 @@ flowchart LR
 
 ### 5. `src/preprocess/` — 文本清洗与纠错
 - 去除 OCR 噪声（乱码、多余空格、页眉页脚水印）。
-- 常见 OCR 错字纠正（借助词典或大模型校正）。
+- 常见 OCR 错字纠正（`cleaner.py` 的 `TYPO_MAP`，形如 `选调牛` → `选调生`）。
 - 文本标准化：全半角、繁简、统一标点。
+- `corrections.py`：**人工纠错层**，把“手工修正”从数据文件里挪到可重跑、可 review 的 `config/corrections.yaml`（见下）。
+
+#### 5.1 人工纠错层（`config/corrections.yaml`）
+
+为什么不能直接改数据：
+
+| 文件 | 谁生成 | 重跑后会怎样 |
+| --- | --- | --- |
+| `data/interim/ocr_text/*.json\|txt` | `run_ocr.py` | `--force` 时被覆盖 |
+| `data/processed/*` | `extract_records.py` | 每次全量重写 |
+| `data/db/selects.sqlite` | `build_database.py` | `--reset` 时清空重建 |
+
+所以人工修正统一写进 `config/corrections.yaml`，由 `extract_records.py` 每次重跑时应用：
+
+```yaml
+text:                                     # ① 文本层：改字
+  global: []                              #    全局（任何图片都生效）
+  images:
+    20231129_238345_01_广东选调:           #    按图片（写 .jpg 也行）
+      - {from: "选调牛", to: "选调生"}     #    原文里可直接找到的错字
+      - {regex: true, from: "第(\\d)届", to: "20\\1届"}  # 需要正则时加 regex: true
+
+fields:                                   # ② 字段层：改抽取值
+  20231129_238345_01_广东选调:
+    - block_index: 0                      #    定位：按同图内第几条（0 开始，推荐）
+      city: 湛江市                         #    覆盖：其余键都当“要改的字段”
+    - name: 王小明                         #    定位：按姓名（可读，但姓名是隐私）
+      set: {city: 湛江市区}                 #    用 set 时才能改 name 本身
+```
+
+- **文本层**在“清洗后、字段抽取前”改写 `OcrResult.lines`，因此纠正后的文本会同时流向
+  **字段抽取**与 `data/processed/ocr_clean.txt`（`OcrResult.text` 是由 lines 派生的属性）。
+  规则先在原文上匹配（可直接照抄详情页“原文”），没命中再用归一化后的文本试一次，
+  所以全角/半角、不可见字符不影响写规则。
+- **字段层**在抽取完成后直接覆盖最终值，用于“**文本没错、是切分规则切错了**”的情况
+  （例如城市正则把上一行的 `…本科生` 和 `湛江` 粘成了 `科生湛江市`）。
+- 只能覆盖 `name / cohort / cohort_year / college / major / destination_org / city / province / position / degree`；
+  定位列与派生列不允许手改。未知字段、错图片名、重复规则、坏正则都只会**告警**，不会中断流水线。
+- 每次跑完 `extract_records.py` 会报告**命中/未命中的规则**（写进 `_extract_summary.json` 的 `corrections` 字段）：
+  改完 yaml 毫无变化时，先看“未命中”——通常是图片名写错或 `from` 与实际文本不一致。
+- 想要“对照实验”：`python scripts/extract_records.py --no-corrections`。
+- 纠错层**不是**为了替代规则：能改规则就改规则（改规则对所有图片生效，纠错只对一条）。
+- ⚠️ `config/corrections.yaml` **会进 git**（`data/` 则被忽略），所以里面**不要写真实姓名**；
+  需要按人定位时优先用 `block_index`。
 
 ### 6. `src/nlp/` — 中文自然语言处理
 - 关键信息抽取：**姓名、届别、所属学院、专业、去向单位、城市、岗位**（核心 7 字段），另附省份、学历、届别年份。
@@ -149,6 +193,11 @@ flowchart LR
 > ⚠️ **隐私提示**：需求要求保留**姓名**，故数据库中存储了真实姓名。
 > 对外提供 API / 展示时建议在接口层做脱敏（如 `余**`），参考 `src/search/` 的展示层。
 
+> 📝 **发现字段值不对时**：先判断是“OCR 认错字”还是“切分规则切错”。
+> 前者补 `src/preprocess/cleaner.py` 的 `TYPO_MAP` 或 `config/corrections.yaml` 的 `text`，
+> 后者优先改 `src/nlp/field_extractor.py` 的规则，改不动再用 `config/corrections.yaml` 的 `fields` 定点覆盖。
+> **不要直接改 `data/` 下的产物** —— 见 5.1 节。
+
 ### 7. `src/database/` — 数据入库
 - `schema.py`：SQLite 表结构 DDL —— `images`（图片/通知元数据）、`selects_records`（7 个核心字段）、`selects_fts`（FTS5 全文索引，trigram 分词）。
 - `repo.py`：连接、UPSERT、全量重建 FTS、检索、分面统计（供前端筛选面板）。
@@ -169,6 +218,8 @@ flowchart LR
 - `crawl_notices.py`：爬取信息门户「通知公告」中的经验分享图片（已实现）。
 - `run_ocr.py`：批量 OCR → `data/interim/ocr_text/*.txt|*.json`（已实现）。
 - `extract_records.py`：OCR 结果清洗 + 结构化 → `data/processed/*.jsonl|csv`（已实现）。
+  依次应用**人工纠错层**的文本层与字段层（规则见 `config/corrections.yaml`），
+  支持 `--corrections <路径>` 换规则文件、`--no-corrections` 关闭纠错做对照。
 - `derive_fields.py`：派生姓名拼音 / 岗位类别 / 学历层次（支持 `--force` 重算）。
 - `build_database.py`：写入 SQLite + 重建 FTS5 索引（已实现）。
 - `check_search.py` / `check_api.py` / `smoke_live.py`：检索层与接口自检（见第八章）。
@@ -182,7 +233,7 @@ flowchart LR
 存放本地 OCR / NLP 模型权重（如 PaddleOCR、分词自定义模型）。体积较大，通常加入 `.gitignore`。
 
 ### 13. `tests/` — 测试
-`pytest` 用例：拼音匹配、岗位分类规则回归、学院抽取、高亮/XSS、检索引擎（筛选·排序·分页·分面·详情）、Web 层数据库连接的线程生命周期、前端静态资源缓存头。
+`pytest` 用例：拼音匹配、岗位分类规则回归、学院抽取、人工纠错层、高亮/XSS、检索引擎（筛选·排序·分页·分面·详情）、Web 层数据库连接的线程生命周期、前端静态资源缓存头。
 数据库以**只读**方式打开（`file:...?mode=ro`），保证测试不会改动生产数据。运行：`python -m pytest tests -q`。
 
 > `tests/test_web_conn.py` 复现 FastAPI 的同步生成器依赖模型：同一次请求里
@@ -198,6 +249,13 @@ flowchart LR
 > “先剥前缀、再白名单模糊对齐”，并让**白名单命中优先于匹配长度**。
 > 改了抽取规则必须重跑 `extract_records.py` + `build_database.py --reset`，
 > 因为 `derive_fields.py` 只补空值，永远不会修正一个非空的错值。
+
+> `tests/test_corrections.py` 锁住纠错层的契约：文本规则能按图片生效且
+> 不误伤其它图片、规则先在原文上匹配再退回归一化文本、`apply_line_corrections`
+> 只改 `text` 而保留 `box`/`score`、字段规则支持按姓名或 `block_index` 定位、
+> 值本来就对时仍算“命中”（否则修好之后规则会一直显示为未命中）、
+> 字段白名单必须都是 `selects_records` 里真实存在的列、仓库自带的
+> `config/corrections.yaml` 必须能无告警加载。
 
 > `tests/test_web_static_cache.py` 锁住前端资源的 `Cache-Control: no-cache`。
 > 详情页的展示范围（只给字段与原图，不展示 OCR 全文 / 图片文件名 / OCR 引擎）
@@ -233,7 +291,7 @@ Jupyter Notebook，用于数据分布探索、OCR 效果评估、检索效果调
 | 全文检索 | SQLite FTS5 / Elasticsearch | ✅ FTS5 |
 | Web 服务 | FastAPI（后端）、Vue / React / **原生 HTML**（前端） | ✅ FastAPI + 原生 HTML/JS |
 | 图表 | ECharts（CDN），断网时自动降级为纯 CSS 条形图 | ✅ |
-| 测试 | pytest + FastAPI TestClient | ✅ 134 项 |
+| | 测试 | pytest + FastAPI TestClient | ✅ 175 项 |
 | 定时任务 | APScheduler / 系统计划任务 | ⬜ 待实现 |
 
 ---
@@ -267,7 +325,7 @@ python -m web.backend.main          # → http://127.0.0.1:8000
 # 6. 自检（可选）
 python scripts/check_search.py      # 检索层 39 项断言
 python scripts/check_api.py         # HTTP 接口 61 项断言
-python -m pytest tests -q           # 单元 / 集成测试 134 项
+python -m pytest tests -q           # 单元 / 集成测试 175 项
 ```
 
 > 端口、监听地址、允许的 CORS 来源都在 `config/config.yaml` 的 `web:` 段落中配置。
@@ -439,7 +497,7 @@ curl "http://127.0.0.1:8000/api/search?sort=name_pinyin&page=2"
 | `scripts/check_search.py` | 不启服务，直接校验检索层：查询解析、分面、排序、分页、高亮 | 39 项全过 |
 | `scripts/check_api.py` | 用 `TestClient` 跑完整 HTTP 链路（含静态资源与 404） | 61 项全过 |
 | `scripts/smoke_live.py` | 对**已启动的真实服务**发请求（需先 `wscript scripts\serve-hidden.vbs` 或 `python -m web.backend.main`） | 6 项全过 |
-| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头、详情页展示范围、学院抽取 | 134 项全过 |
+| `pytest tests -q` | 拼音、岗位分类、高亮、检索引擎、Web 连接线程模型、静态资源缓存头、详情页展示范围、学院抽取、人工纠错层 | 175 项全过 |
 
 > `smoke_live.py` 的拼音用例默认用占位名 `zhangsan`（仓库内不出现真实姓名）。
 > 若要校验真实数据，先在当前会话设 `$env:SMOKE_PINYIN_QUERY="<姓名全拼>"` 再运行。

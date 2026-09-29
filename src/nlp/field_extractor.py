@@ -784,6 +784,12 @@ def extract_from_ocr_result(result: Any, min_line_length: int = 2) -> List[Extra
 
     相比 :func:`extract_from_text`，这里能利用文本框位置把海报按行/列还原，
     显著改善"姓名 + 学院 + 专业 + 去向"并排排版时的抽取效果。
+
+    .. note::
+        人工纠错层不在这里生效，而是在上游直接改写 ``result.lines``
+        （见 :func:`src.preprocess.corrections.apply_line_corrections`）。
+        这样做的好处是：纠正后的文本会同时流向抽取与 ``ocr_clean.txt``，
+        且每条规则只会被应用一次。
     """
     lines = getattr(result, "lines", None) or []
     if not lines:

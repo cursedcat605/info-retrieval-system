@@ -4,17 +4,23 @@
 
     data/interim/ocr_text/*.json   （OCR 原始结果，含坐标与置信度）
         └─ clean_lines / normalize_text          （只做减法：去噪、去页脚、全角转半角）
+        └─ apply_line_corrections                （人工纠错层·文本层，改完立刻生效）
         └─ extract_from_ocr_result               （按阅读顺序切分主讲人区块，抽 7 个字段）
+            └─ apply_field_corrections           （人工纠错层·字段层，直接改抽取值）
             ├─ data/processed/ocr_clean.txt       清洗后文本（人工核对用）
             ├─ data/processed/images.jsonl        图片级元数据（含 OCR 统计）
             ├─ data/processed/selects_records.jsonl  记录级结构化数据
             ├─ data/processed/selects_records.csv    同上，CSV 版本
             └─ data/processed/_extract_summary.json  汇总统计
 
+人工纠错规则写在 ``config/corrections.yaml``，详见
+:mod:`src.preprocess.corrections`。
+
 用法::
 
     python scripts/extract_records.py
     python scripts/extract_records.py --limit 5      # 抽样验证
+    python scripts/extract_records.py --no-corrections  # 看纠错层到底改了什么
 """
 from __future__ import annotations
 
@@ -34,6 +40,11 @@ from src.nlp.field_extractor import ExtractedRecord, extract_from_ocr_result  # 
 from src.ocr.batch import load_image_metadata, ocr_output_dir  # noqa: E402
 from src.ocr.engine import OcrResult  # noqa: E402
 from src.preprocess.cleaner import clean_lines  # noqa: E402
+from src.preprocess.corrections import (  # noqa: E402
+    apply_field_corrections,
+    apply_line_corrections,
+    load_corrections,
+)
 from src.utils.logger import get_logger  # noqa: E402
 from src.utils.paths import data_dir, ensure_dir  # noqa: E402
 
@@ -115,6 +126,17 @@ def main() -> int:
     parser.add_argument("--out-dir", type=Path, default=None, help="输出目录（默认 data/processed）")
     parser.add_argument("--limit", type=int, default=None, help="仅处理前 N 个结果文件")
     parser.add_argument("--min-fields", type=int, default=1, help="至少命中几个核心字段才保留")
+    parser.add_argument(
+        "--corrections",
+        type=Path,
+        default=None,
+        help=f"人工纠错规则文件（默认 config/corrections.yaml）",
+    )
+    parser.add_argument(
+        "--no-corrections",
+        action="store_true",
+        help="忽略纠错层，只跑规则/正则（用于对比纠错层到底改了什么）",
+    )
     args = parser.parse_args()
 
     ocr_dir = args.ocr_dir.resolve() if args.ocr_dir else ocr_output_dir()
@@ -126,6 +148,9 @@ def main() -> int:
         return 1
 
     metadata = load_image_metadata()
+    corrections = None if args.no_corrections else load_corrections(args.corrections)
+    line_fixed = 0
+    field_fixed: Counter[str] = Counter()
     image_rows: List[Dict[str, Any]] = []
     record_rows: List[Dict[str, Any]] = []
     clean_chunks: List[str] = []
@@ -141,6 +166,9 @@ def main() -> int:
             continue
 
         result = OcrResult.from_dict(payload)
+        # 人工纠错层（文本层）：就地改写 result.lines，
+        # 因此下游的字段抽取与 ocr_clean.txt 都会看到纠正后的文本。
+        line_fixed += apply_line_corrections(result, corrections)
         meta = dict(payload.get("meta") or {})
         meta.update(metadata.get(result.image or path.stem, {}))
 
@@ -180,6 +208,10 @@ def main() -> int:
 
         for idx, record in enumerate(records):
             row = record_to_row(record, image_rows[-1]["image"], idx)
+            # 人工纠错层（字段层）：直接覆盖最终取值，
+            # 用于"文本没错、是切分规则切错了"的情况。
+            for field in apply_field_corrections(row, corrections):
+                field_fixed[field] += 1
             record_rows.append(row)
             for field in ("name", "cohort", "college", "major", "destination_org", "city", "position"):
                 if row.get(field):
@@ -203,6 +235,11 @@ def main() -> int:
             writer.writerow({k: row.get(k) for k in RECORD_FIELDS})
 
     total = len(record_rows)
+    hit_rules: List[str] = []
+    miss_rules: List[str] = []
+    if corrections is not None:
+        corrections.check_images(r["image"] for r in image_rows)
+        hit_rules, miss_rules = corrections.report()
     summary = {
         "ocr_files": len(files),
         "ocr_bad_files": failed,
@@ -211,6 +248,17 @@ def main() -> int:
         "records": total,
         "fill_rate": {k: round(field_fill[k] / total, 3) if total else 0.0 for k in field_fill},
         "core_fields": ["name", "cohort", "college", "major", "destination_org", "city", "position"],
+        "corrections": {
+            "enabled": corrections is not None,
+            "source": str(corrections.source_path) if corrections is not None else None,
+            "text_rules": len(corrections.text_rules) if corrections is not None else 0,
+            "field_rules": len(corrections.field_rules) if corrections is not None else 0,
+            "lines_changed": line_fixed,
+            "fields_changed": dict(field_fixed),
+            "matched": hit_rules,
+            "unmatched": miss_rules,
+            "warnings": list(corrections.warnings) if corrections is not None else [],
+        },
     }
     (out_dir / "_extract_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -220,6 +268,13 @@ def main() -> int:
         "抽取完成：%d 个 OCR 结果 → %d 张图片、%d 条记录，输出目录 %s",
         len(files), len(image_rows), total, out_dir,
     )
+    if corrections is not None and not corrections.is_empty:
+        logger.info(
+            "纠错层：改写 %d 行文本、覆盖 %d 个字段；命中 %d 条规则，未命中 %d 条",
+            line_fixed, sum(field_fixed.values()), len(hit_rules), len(miss_rules),
+        )
+        for message in miss_rules:
+            logger.warning("纠错规则未命中任何数据：%s", message)
     print(json.dumps(summary, ensure_ascii=False))
     return 0
 
