@@ -7,7 +7,7 @@
 <meta name="description" content="基于门户公开通知公告整理的研究生选调生去向检索系统：关键词/拼音检索、多条件筛选、去向统计。">
 <!-- 静态资源带版本号：改过前端 js/css 后把 ?v= 的数字加一，浏览器就会绕过旧缓存。
      旧缓存曾让首页统计面板整块留白（旧版 common.js 没有 IRS 命名空间）。 -->
-<link rel="stylesheet" href="/styles.css?v=5">
+<link rel="stylesheet" href="/styles.css?v=8">
 </head>
 <body data-page="home">
 
@@ -59,6 +59,7 @@
     </div>
   </section>
 
+  <div class="home-body">
   <!-- -------------------------------------------------------------- 数据概览 -->
   <section class="section-head">
     <span class="mark" aria-hidden="true"></span>
@@ -66,16 +67,17 @@
     <a class="more" href="/stats.html">统计分析 →</a>
   </section>
 
-  <section class="dash">
+  <!-- 三张统计图横排：数据概览 / 去向流向 / 热门目的地 -->
+  <section class="dash charts">
     <article class="panel">
-      <h3>数据概览 <span class="tail">基于已收录公开信息</span></h3>
+      <h3>数据概览 <span class="tail">基于公开信息</span></h3>
       <div class="metrics" id="home-metrics"></div>
       <div class="bars" id="home-bars"></div>
       <p class="meta-note" id="home-bars-foot"></p>
     </article>
 
     <article class="panel flow">
-      <h3>去向流向 <span class="tail">示意 · 按公开记录整理</span></h3>
+      <h3>去向流向 <span class="tail">按公开记录整理</span></h3>
       <svg id="province-map" viewBox="0 0 520 350" fill="none" aria-label="中国轮廓及各省选调生记录分布图" role="img">
         <path class="china-outline" d="M45 82 62 69 82 74 96 58 121 64 139 52 162 58 179 70 197 63 212 76 232 74 244 88 262 85 275 96 296 90 311 101 330 96 344 107 362 104 375 117 391 115 401 127 419 130 426 144 441 149 446 164 461 169 458 183 448 192 444 208 432 216 425 232 410 237 398 254 380 250 367 263 350 258 337 273 320 267 307 281 290 277 276 292 260 285 245 299 227 294 211 281 196 276 184 262 169 258 157 245 140 243 130 228 112 228 107 212 91 207 95 190 79 181 86 165 72 154 78 139 62 133 67 117 51 107 56 94Z" fill="#f5f9fb" stroke="#91b3ca" stroke-width="1.5" stroke-linejoin="round"/>
         <path class="island-outline" d="M386 239q7-12 13-4l-2 20-8 12-5-12zM299 294q5-7 10-1l-2 9-7 3-4-5z" fill="#f5f9fb" stroke="#91b3ca" stroke-width="1.2"/>
@@ -84,9 +86,14 @@
       <div class="legend">
         <span><i></i>记录集中地</span>
         <span><i></i>其他去向</span>
-        <span class="muted">省份位置为近似地理落点 · 气泡大小对应记录数</span>
+        <span class="muted">位置为近似落点 · 气泡大小对应记录数</span>
       </div>
-      <div class="rank" id="home-rank" style="margin-top:16px"></div>
+    </article>
+
+    <article class="panel">
+      <h3>大家都去向哪里 <span class="tail">热门目的地</span></h3>
+      <div class="rank" id="home-rank"></div>
+      <p class="meta-note">点击任一目的地即可带着筛选条件进入检索页，继续按学院、学历、岗位类别细化。</p>
     </article>
   </section>
 
@@ -100,24 +107,15 @@
 
   <div class="chips" id="home-chips"></div>
 
-  <section class="dash">
-    <div>
-      <div class="cards" id="home-records"></div>
-      <div class="empty" id="home-empty" hidden>
-        <span class="big" aria-hidden="true">◍</span>
-        还没有可展示的记录
-        <p class="hint">数据库可能尚未构建，请先运行 <code>scripts/build_database.py</code>。</p>
-      </div>
+  <section class="records">
+    <div class="cards cols2" id="home-records"></div>
+    <div class="empty" id="home-empty" hidden>
+      <span class="big" aria-hidden="true">◍</span>
+      还没有可展示的记录
+      <p class="hint">数据库可能尚未构建，请先运行 <code>scripts/build_database.py</code>。</p>
     </div>
-    <aside class="panel">
-      <h3>大家都去向哪里 <span class="tail">热门目的地</span></h3>
-      <div class="rank" id="home-side-rank"></div>
-      <div class="rule" style="height:1px;background:var(--line-soft);margin:18px 0 14px"></div>
-      <p class="meta-note" style="margin:0">
-        点击任一目的地即可带着筛选条件进入检索页，继续按学院、学历、岗位类别细化。
-      </p>
-    </aside>
   </section>
+  </div><!-- /.home-body -->
 </main>
 
 <footer class="footer">
@@ -188,7 +186,7 @@
   });
 })();
 </script>
-<script src="/common.js?v=5"></script>
-<script src="/home.js?v=5"></script>
+<script src="/common.js?v=8"></script>
+<script src="/home.js?v=8"></script>
 </body>
 </html>

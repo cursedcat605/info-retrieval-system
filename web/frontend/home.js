@@ -122,24 +122,26 @@
     }).join("");
     var foot = $("#home-bars-foot");
     if (foot) {
-      foot.textContent = "毕业届别收录趋势 · 最近 " + recent.length + " 届，柱长按最大届别记录数等比缩放。";
+      foot.textContent = "最近 " + recent.length + " 届收录趋势 · 按最大届别等比缩放。";
     }
+  }
+
+  // 省份短名（窄栏排行的展示用；链接仍用完整名称）
+  function shortRegion(value) {
+    return String(value || "")
+      .replace(/壮族自治区|维吾尔自治区|回族自治区|特别行政区/g, "")
+      .replace(/省|市|自治区/g, "");
   }
 
   function renderProvinceMap(stats) {
     var pins = $("#province-map-pins");
     if (!pins) return;
-    function provinceKey(value) {
-      return String(value || "")
-        .replace(/壮族自治区|维吾尔自治区|回族自治区|特别行政区/g, "")
-        .replace(/省|市|自治区/g, "");
-    }
     var rows = (stats.province || []).filter(function (row) {
-      return PROVINCE_CENTERS.hasOwnProperty(provinceKey(row.value));
+      return PROVINCE_CENTERS.hasOwnProperty(shortRegion(row.value));
     });
     var max = rows.reduce(function (n, row) { return Math.max(n, Number(row.count) || 0); }, 0) || 1;
     pins.innerHTML = rows.map(function (row) {
-      var name = provinceKey(row.value);
+      var name = shortRegion(row.value);
       var point = PROVINCE_CENTERS[name];
       var x = 32 + ((point[0] - 73) / 62) * 455;
       var y = 15 + ((54 - point[1]) / 36) * 300;
@@ -158,12 +160,15 @@
     var max = rows.reduce(function (acc, r) { return Math.max(acc, Number(r.count) || 0); }, 0) || 1;
     return rows.map(function (r, i) {
       var width = Math.max(4, Math.round(((Number(r.count) || 0) / max) * 100));
-      var name = IRS.esc(r.value);
+      var full = String(r.value || "");
+      // 三图一排后每栏更窄，展示用短名（宁夏回族自治区 → 宁夏），完整名称写进 title
+      var name = IRS.esc(shortRegion(full));
+      var tip = IRS.esc(full) + "：" + IRS.num(r.count) + " 条（占全部记录 " + IRS.pct(r.count, total) + "%）";
       var label = linkable
-        ? '<a class="nm" href="/search.html?province=' + encodeURIComponent(r.value) + '">' + name + "</a>"
-        : '<span class="nm">' + name + "</span>";
+        ? '<a class="nm" href="/search.html?province=' + encodeURIComponent(full) + '" title="' + IRS.esc(full) + '">' + name + "</a>"
+        : '<span class="nm" title="' + IRS.esc(full) + '">' + name + "</span>";
       return (
-        '<div class="rank-row" title="' + name + '：' + IRS.num(r.count) + ' 条（占全部记录 ' + IRS.pct(r.count, total) + '%）"><span class="no">' + (i + 1) + "</span>" + label +
+        '<div class="rank-row" title="' + tip + '"><span class="no">' + (i + 1) + "</span>" + label +
         '<span class="track"><i class="fill" style="width:' + width + '%"></i></span>' +
         '<span class="cnt">' + IRS.pct(r.count, total) + "%</span></div>"
       );
@@ -171,20 +176,13 @@
   }
 
   function renderRank(stats) {
+    var box = $("#home-rank");
+    if (!box) return;
     var total = (stats.summary || {}).records || 0;
-    var top = (stats.province || []).slice(0, 5);
-    var flow = $("#home-rank");
-    if (flow) {
-      flow.innerHTML = top.length
-        ? rankHTML(top, total, false)
-        : '<p class="meta-note">暂无省份分布数据。</p>';
-    }
-    var side = $("#home-side-rank");
-    if (side) {
-      side.innerHTML = top.length
-        ? rankHTML(top.slice(0, 4), total, true)
-        : '<p class="meta-note">暂无数据。</p>';
-    }
+    var top = (stats.province || []).slice(0, 7);
+    box.innerHTML = top.length
+      ? rankHTML(top, total, true)
+      : '<p class="meta-note">暂无省份分布数据。</p>';
   }
 
   // -------------------------------------------------------------- 最近收录 //
@@ -229,7 +227,7 @@
   function showStatsFailure(message) {
     var note = '<p class="meta-note">统计数据不可用：' + escHtml(message) +
       '　<a href="/">重新加载</a></p>';
-    var boxes = ["#home-metrics", "#home-bars", "#home-rank", "#home-side-rank",
+    var boxes = ["#home-metrics", "#home-bars", "#home-rank",
       "#home-chips", "#home-records"];
     boxes.forEach(function (sel) {
       var box = $(sel);

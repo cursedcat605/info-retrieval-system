@@ -418,6 +418,45 @@ code, kbd { font-family: ui-monospace, Consolas, monospace; }
   margin-top: 16px;
 }
 
+/* 首页内容栅格：与主视觉同宽（.dash / .section-head / .chips 原本是通栏的，和 hero 对不齐） */
+.home-body {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 首页三张统计图横排（数据概览 / 去向流向 / 热门目的地）：整排更矮更紧凑 */
+.dash.charts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+/* 三栏等高：内容顶端对齐，说明/图例贴到面板底部，避免底部空一块 */
+.dash.charts > .panel { display: flex; flex-direction: column; padding: 18px 18px 16px; }
+.dash.charts > .panel > .legend,
+.dash.charts > .panel:last-child > .meta-note { margin-top: auto; }
+.dash.charts > .panel > h3 { margin-bottom: 14px; font-size: 14.5px; }
+.dash.charts .metrics { gap: 10px; }
+.dash.charts .metric { padding: 10px 12px; }
+.dash.charts .metric .k { font-size: 9px; letter-spacing: 1px; }
+.dash.charts .metric .v { font-size: 21px; }
+.dash.charts .metric .v .unit { font-size: 10.5px; margin-left: 3px; }
+.dash.charts .metric .note { font-size: 10px; }
+.dash.charts .bars { gap: 8px; margin-top: 14px; }
+.dash.charts .bar-row { gap: 8px; }
+.dash.charts .bar-row .label { width: 38px; font-size: 11px; }
+.dash.charts .bar-row .val { width: 24px; font-size: 10.5px; }
+.dash.charts .flow svg { max-height: 260px; }
+.dash.charts .flow .legend { gap: 10px; padding-top: 12px; font-size: 10px; }
+.dash.charts .rank { gap: 9px; }
+.dash.charts .rank-row { gap: 8px; font-size: 11.5px; }
+.dash.charts .rank-row .no { width: 16px; height: 16px; border-radius: 5px; font-size: 9.5px; }
+.dash.charts .rank-row .nm { width: 46px; }
+.dash.charts .rank-row .cnt { font-size: 10.5px; }
+.dash.charts .meta-note { margin-top: 14px; line-height: 1.7; }
+
+/* 首页「最近收录」：移到三图下方通栏 */
+.records { margin-bottom: 48px; }
+
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -465,6 +504,9 @@ code, kbd { font-family: ui-monospace, Consolas, monospace; }
   background: #e7f0f6; overflow: hidden;
 }
 .bar-row .fill {
+  /* <i> 默认是 inline，空元素的 width/height 百分比都不生效（条形会整条消失）；
+     必须显式 block 化才能按 style="width:x%" 撑开。 */
+  display: block;
   height: 100%; border-radius: 999px;
   background: linear-gradient(90deg, #4c8fca, #2866a5);
   min-width: 4px;
@@ -520,7 +562,8 @@ code, kbd { font-family: ui-monospace, Consolas, monospace; }
 }
 .rank-row .nm { flex: none; width: 68px; color: var(--ink-soft); }
 .rank-row .track { flex: 1; height: 7px; border-radius: 999px; background: #eaf2f7; overflow: hidden; }
-.rank-row .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7db4dd, #2866a5); }
+/* 同上：stats.js 里是 <span class="fill">，同样需要 block 化 */
+.rank-row .fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7db4dd, #2866a5); }
 .rank-row .cnt { flex: none; font-size: 11px; color: var(--muted-2); font-variant-numeric: tabular-nums; }
 
 /* ==========================================================================
@@ -962,6 +1005,8 @@ a.chip:hover { text-decoration: none; }
    ========================================================================== */
 .cards { display: flex; flex-direction: column; gap: 14px; }
 .cards.grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+/* 首页最近收录：通栏两列（自动填充会在 1240px 下排成 3 列，把「录用单位 / 岗位方向」挤到截断） */
+.cards.cols2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 
 .card {
   position: relative;
@@ -1770,6 +1815,12 @@ body.help-open { overflow: hidden; }
   .detail-source { position: static; }
 }
 
+/* 三图一排 / 两列卡片在窄屏落回单列 */
+@media (max-width: 900px) {
+  .dash.charts { grid-template-columns: 1fr; }
+  .cards.cols2 { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 1000px) {
   .layout { grid-template-columns: 1fr; }
   .sidebar {
@@ -1791,7 +1842,7 @@ body.help-open { overflow: hidden; }
   .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .wrap, .layout, .pagehead, .crumbs, .detail-main, .hero-profile, .detail-actions { padding-left: 16px; padding-right: 16px; }
+  .wrap, .layout, .pagehead, .crumbs, .detail-main, .hero-profile, .detail-actions, .home-body { padding-left: 16px; padding-right: 16px; }
   .top .inner { padding: 0 16px; gap: 12px; }
 }
 
