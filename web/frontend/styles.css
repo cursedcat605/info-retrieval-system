@@ -441,10 +441,6 @@ code, kbd { font-family: ui-monospace, Consolas, monospace; }
 .dash.charts .metric .v { font-size: 21px; }
 .dash.charts .metric .v .unit { font-size: 10.5px; margin-left: 3px; }
 .dash.charts .metric .note { font-size: 10px; }
-.dash.charts .bars { gap: 8px; margin-top: 14px; }
-.dash.charts .bar-row { gap: 8px; }
-.dash.charts .bar-row .label { width: 38px; font-size: 11px; }
-.dash.charts .bar-row .val { width: 24px; font-size: 10.5px; }
 .dash.charts .flow svg { max-height: 260px; }
 .dash.charts .flow .legend { gap: 10px; padding-top: 12px; font-size: 10px; }
 .dash.charts .rank { gap: 9px; }
@@ -1571,7 +1567,7 @@ mark {
 
 .charts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 18px;
 }
@@ -1710,6 +1706,8 @@ button,
 .flow .china-outline { transition: fill .2s; }
 .flow:hover .china-outline { fill: #f1f7fa; }
 .flow .china-river { pointer-events: none; }
+.flow .map-inset { pointer-events: none; }
+.flow .island-outline { stroke-linejoin: round; }
 .flow .map-pin { cursor: pointer; outline: none; }
 .flow .map-halo { fill: #4c8fca; opacity: .14; transition: opacity .2s, r .2s; }
 .flow .map-bubble { fill: #2866a5; stroke: #fff; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; transition: transform .2s, fill .2s; }
@@ -1780,8 +1778,7 @@ body.help-open { overflow: hidden; }
 .help-columns li { margin: 5px 0; }
 .help-columns b { color: #365e7a; font-weight: 600; }
 .help-columns kbd { padding: 0 5px; border: 1px solid #d3e0e9; border-radius: 999px; background: #fff; color: #496d88; font-size: 10px; }
-.help-note { margin: 16px 0; color: #8497a6; font-size: 10.5px; }
-.help-done { min-width: 122px; height: 40px; padding: 0 22px; border: 0; background: linear-gradient(135deg,#327ab8,#2866a5); color: #fff; font-size: 12px; font-weight: 600; box-shadow: var(--shadow-cta); }
+.help-note { margin: 16px 0 2px; color: #8497a6; font-size: 10.5px; }
 
 @media (max-width: 1000px) {
   .top .quick { display: flex; width: min(320px, 31vw); }
@@ -1818,6 +1815,7 @@ body.help-open { overflow: hidden; }
 /* 三图一排 / 两列卡片在窄屏落回单列 */
 @media (max-width: 900px) {
   .dash.charts { grid-template-columns: 1fr; }
+  .charts { grid-template-columns: 1fr; }
   .cards.cols2 { grid-template-columns: 1fr; }
 }
 

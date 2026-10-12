@@ -254,32 +254,6 @@
     }).join("");
   }
 
-  var FILL_LABELS = {
-    name: "姓名", cohort: "届别", college: "学院", major: "专业",
-    destination_org: "录用单位", city: "城市", position: "岗位方向", province: "省份",
-    degree: "学历（原文）", position_category: "岗位类别", degree_level: "学历层次"
-  };
-
-  function renderFillRate(fill) {
-    var box = $("#fill-bars");
-    if (!box) return;
-    var entries = Object.keys(fill || {}).map(function (key) {
-      return { key: key, label: FILL_LABELS[key] || key, rate: Number(fill[key]) || 0 };
-    }).sort(function (a, b) { return b.rate - a.rate; });
-    if (!entries.length) {
-      box.innerHTML = '<p class="muted">暂无数据</p>';
-      return;
-    }
-    box.innerHTML = entries.map(function (entry) {
-      var width = Math.max(2, Math.round(entry.rate * 100));
-      return '<div class="bar-row">' +
-        '<span class="label">' + IRS.esc(entry.label) + "</span>" +
-        '<span class="track"><span class="fill" style="width:' + width + '%"></span></span>' +
-        '<span class="val">' + Math.round(entry.rate * 100) + "%</span>" +
-        "</div>";
-    }).join("");
-  }
-
   function renderCharts(data) {
     if (chartsDone || !window.echarts) return;
     chartsDone = true;
@@ -297,11 +271,10 @@
 
   // ---------------------------------------------------------------- 启动 //
   IRS.ready(function () {
-    IRS.getJSON(IRS.API + "/stats", { top_n: 15 })
+    IRS.getJSON(IRS.API + "/stats", { top_n: 10 })
       .then(function (data) {
         stats = data;
         renderKpis(data);
-        renderFillRate(data.fill_rate);
         return loadECharts()
           .then(function () { renderCharts(data); })
           .catch(function () {

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>统计分析 · 远帆 · 选调生去向档案</title>
 <meta name="description" content="选调生去向的整体分布：届别趋势、去向省份、岗位类别、学历层次、学院与城市分布。">
-<link rel="stylesheet" href="/styles.css?v=8">
+<link rel="stylesheet" href="/styles.css?v=12">
 </head>
 <body data-page="stats">
 
@@ -54,10 +54,17 @@
     </section>
 
     <section class="chart">
-      <h3>去向省份 TOP 15</h3>
+      <h3>去向省份 TOP 10</h3>
       <p class="hint">按记录条数排序，横向条形越长的省份出现越多。</p>
       <div class="canvas" id="chart-province"></div>
       <div class="fallback-list" id="fallback-province" hidden></div>
+    </section>
+
+    <section class="chart">
+      <h3>去向城市 TOP 10</h3>
+      <p class="hint">识别到的城市分布，通常与省份分布互相印证。</p>
+      <div class="canvas" id="chart-city"></div>
+      <div class="fallback-list" id="fallback-city" hidden></div>
     </section>
 
     <section class="chart">
@@ -74,24 +81,11 @@
       <div class="fallback-list" id="fallback-degree" hidden></div>
     </section>
 
-    <section class="chart">
-      <h3>去向城市 TOP 15</h3>
-      <p class="hint">识别到的城市分布，通常与省份分布互相印证。</p>
-      <div class="canvas" id="chart-city"></div>
-      <div class="fallback-list" id="fallback-city" hidden></div>
-    </section>
-
     <section class="chart wide">
-      <h3>学院分布 TOP 15</h3>
+      <h3>学院分布 TOP 10</h3>
       <p class="hint">记录条数最多的学院，用来判断样本集中在哪些院系。</p>
       <div class="canvas" id="chart-college"></div>
       <div class="fallback-list" id="fallback-college" hidden></div>
-    </section>
-
-    <section class="chart wide">
-      <h3>字段填充率</h3>
-      <p class="hint">每个字段有多少比例的记录被成功识别，用来衡量数据完整度。</p>
-      <div class="bars" id="fill-bars"></div>
     </section>
   </div>
 </div>
@@ -108,7 +102,7 @@
   </div>
 </footer>
 
-<script src="/common.js?v=8"></script>
-<script src="/stats.js?v=8"></script>
+<script src="/common.js?v=12"></script>
+<script src="/stats.js?v=12"></script>
 </body>
 </html>

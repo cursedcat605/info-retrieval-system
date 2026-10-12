@@ -223,6 +223,8 @@ fields:                                   # ② 字段层：改抽取值
 - `derive_fields.py`：派生姓名拼音 / 岗位类别 / 学历层次（支持 `--force` 重算）。
 - `build_database.py`：写入 SQLite + 重建 FTS5 索引（已实现）。
 - `check_search.py` / `check_api.py` / `smoke_live.py`：检索层与接口自检（见第八章）。
+- `serve.ps1` / `serve-hidden.vbs`：Web 服务守护进程（后台运行、崩溃重启、可开机自启）。
+- `tunnel.ps1` / `tunnel-hidden.vbs`：Cloudflare 快速隧道守护进程，把本机服务临时发布到公网（见 8.1.2）。
 - `run_all.py`：端到端执行全流程（待实现）。
 
 ### 11. `web/` — Web 应用
@@ -234,7 +236,7 @@ fields:                                   # ② 字段层：改抽取值
   | `index.html` / `home.js` | 首页：品牌区 + 主搜索框 + 数据概览 + 届别趋势 + 去向地图 + 最近收录 |
   | `search.html` / `app.js` | 检索页：左侧分面筛选 + 卡片/表格结果 + 排序分页 + 联想补全 |
   | `detail.html` / `detail.js` | 详情页：字段档案（基本信息 / 选调生信息 / 字段证据 / 来源）+ 通知原图 |
-  | `stats.html` / `stats.js` | 统计页：6 个 KPI + 届别趋势 / 省份 / 岗位类别 / 学历 / 城市 / 学院 图表 + 字段填充率 |
+  | `stats.html` / `stats.js` | 统计页：6 个 KPI + 届别趋势 / 省份（TOP 10） / 城市（TOP 10） / 岗位类别 / 学历 / 学院（TOP 10） 图表（宽屏两列，同类图并排） |
   | `common.js` | 共享层，导出单一命名空间 `window.IRS`（`esc` / `hi` / `num` / `cardHTML` / `getJSON` / `readState` / `writeState` …） |
   | `styles.css` | 唯一全局样式表，`preview.svg` / `filter-preview.svg` / `detail-preview.svg` 三张稿子里的设计令牌（配色 / 字体 / 圆角 / 阴影）都收在文件顶部的 `:root` 里 |
 
@@ -426,7 +428,7 @@ python -m web.backend.main        # 监听 127.0.0.1:8000
 | 首页 | `/` | 主搜索框 + 数据概览 + 届别趋势 + 去向地图 + 最近收录 |
 | 多维检索 | `/search.html?q=<关键词>` | 左侧分面筛选 + 结果卡片/表格切换 + 排序分页 |
 | 信息详情 | `/detail.html?id=<记录ID>` | 左栏字段（基本信息 / 选调生信息 / 字段证据 / 来源）+ 右栏通知原图 |
-| 统计分析 | `/stats.html` | 6 个 KPI + 省份、届别、岗位类别、学历、城市、学院图表 + 字段填充率 |
+| 统计分析 | `/stats.html` | 6 个 KPI + 省份、届别、岗位类别、学历、城市、学院图表（省份 / 城市 / 学院只取 TOP 10） |
 | 接口文档 | `/docs` | FastAPI 自动生成的 Swagger UI（**仅供开发者，不在页面导航中展示**） |
 | 图片原文 | `/images/<文件名>` | 原图直出，详情页可对照 |
 
@@ -469,6 +471,42 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\serve.ps1 -Stop
 | 恢复自启 | 删除 `logs/web-server.stop`，再运行 vbs 或双击启动项 |
 
 > 读到 `退出码 -1（进程被强制结束）` 属于 `Stop-Process`／任务管理器强杀的返回值，**不是**服务自身崩溃。
+
+#### 8.1.2 临时对外分享（Cloudflare 快速隧道）
+
+想让手机或外网同学直接打开，用 Cloudflare 快速隧道把本机 8000 端口发布出去。**免账号、免域名、免备案**，前提只要本机 Web 服务在跑（见 8.1.1）。
+
+```powershell
+# 启动（后台守护，崩溃自动重拉；输出本次的公网地址）
+wscript scripts\tunnel-hidden.vbs
+#   也可以直接跑前台守护进程，会一直占着当前窗口并实时打印地址：
+#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\tunnel.ps1
+
+# 只取当前公网地址（方便脚本或复制粘贴）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\tunnel.ps1 -Url
+
+# 查看运行状态 + 最近日志
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\tunnel.ps1 -Status
+
+# 停止
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\tunnel.ps1 -Stop
+```
+
+| 项 | 说明 |
+| --- | --- |
+| 地址在哪 | 启动时直接打印；之后存在 `logs\tunnel-url.txt`，也可用 `-Url` 取 |
+| 地址会变 | 快速隧道每次启动都分配**新的随机域名**，旧地址立刻失效，必须重新分享 |
+| 单实例 | 已有 `cloudflared` 在跑则不会重复启动 |
+| 自动重启 | `cloudflared` 意外退出后 5 秒自动拉起，不限次数 |
+| 日志 | `logs/tunnel.log`（守护事件）/ `logs/tunnel.out.log`、`logs/tunnel.err.log`（cloudflared 原始输出） |
+| 恢复 | 若启动无反应，先删掉停止标记 `logs\tunnel.stop` |
+| 依赖 | `cloudflared.exe`，优先用 `%LOCALAPPDATA%\cloudflared\cloudflared.exe`，否则回退 PATH |
+
+> 停止后原公网地址会返回 Cloudflare `530`，这是**正常的**（隧道已断），不代表服务坏了；
+> 本机 `http://127.0.0.1:8000` 不受影响。
+>
+> 快速隧道是给临时演示用的：地址随机、无鉴权、**任何拿到链接的人都能访问**，不要用它发布敏感数据。
+> 长期对外请改用命名隧道（`cloudflared tunnel` + 自有域名）。
 
 ### 8.2 检索能力对应关系
 

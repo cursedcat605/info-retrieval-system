@@ -360,7 +360,6 @@
     if (!overlay || !triggers.length) return;
     var dialog = overlay.querySelector(".help-dialog");
     var closeButton = overlay.querySelector(".help-close");
-    var doneButton = overlay.querySelector(".help-done");
     var closeTimer = null;
     var activeTrigger = null;
 
@@ -397,7 +396,6 @@
 
     triggers.forEach(function (trigger) { trigger.addEventListener("click", openHelp); });
     if (closeButton) closeButton.addEventListener("click", closeHelp);
-    if (doneButton) doneButton.addEventListener("click", closeHelp);
     overlay.addEventListener("click", function (ev) {
       if (ev.target === overlay) closeHelp();
     });
