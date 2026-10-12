@@ -1,0 +1,40 @@
+{
+  "images": 92,
+  "records": 155,
+  "empty_records": 0,
+  "fill_rate": {
+    "name": 0.961,
+    "cohort": 0.942,
+    "college": 0.981,
+    "major": 0.852,
+    "destination_org": 0.981,
+    "city": 0.658,
+    "position": 0.155,
+    "province": 0.8,
+    "degree": 0.484,
+    "position_category": 1.0,
+    "degree_level": 0.484
+  },
+  "db_path": "E:/个人proj/信息检索系统/data/db/selects.sqlite",
+  "fts_indexed": 155,
+  "images_input": 92,
+  "records_input": 155,
+  "records_written": 155,
+  "derived": {
+    "updated": 155,
+    "skipped": 0,
+    "total": 155,
+    "added_columns": []
+  },
+  "facets": {
+    "province": 24,
+    "position_category": 5,
+    "degree_level": 3,
+    "cohort_year": 8,
+    "college": 14,
+    "major": 48,
+    "city": 75,
+    "destination_org": 100,
+    "cohort": 8
+  }
+}

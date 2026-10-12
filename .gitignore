@@ -16,13 +16,24 @@ env/
 data/raw/cookies.json
 cookies.json
 
-# ===== 数据（原始数据与数据库不入库）=====
+# ===== 数据（原始数据不入库）=====
+# 爬取的原图、OCR 文本与中间产物一律不提交：体积大、且含未脱敏的门户原文。
 data/raw/images/
 data/raw/metadata/
 data/interim/
 data/processed/
-data/db/
-!data/**/.gitkeep
+
+# ===== 数据库（例外：只提交构建好的最终产物）=====
+# 仓库已转为私有，因此把构建好的 SQLite 库随代码一起提交，
+# 克隆下来即可直接启动，无需先跑 OCR 与建库流程。
+# 注意：库内含真实姓名（选调生去向），**变更仓库可见性前必须先脱敏**。
+data/db/*
+!data/db/.gitkeep
+!data/db/selects.sqlite
+!data/db/_db_summary.json
+# WAL 日志与共享内存是运行期伴生文件，必须排除
+*.sqlite-wal
+*.sqlite-shm
 
 # ===== 模型权重（体积大）=====
 models/*
@@ -44,3 +55,9 @@ logs/*.stop
 .idea/
 .DS_Store
 Thumbs.db
+
+# ===== AI 编码工具产物（与系统运行无关）=====
+# .agents/ 是第三方技能包（约 3.6 MB），skills-lock.json 是工具自己的锁文件。
+.agents/
+.claude/
+skills-lock.json
