@@ -35,6 +35,12 @@ data/db/*
 *.sqlite-wal
 *.sqlite-shm
 
+# ===== 手工整理表格（原件不入库）=====
+# 与 data/raw 同理：xlsx 原件含真实姓名，**变更仓库可见性前必须先脱敏**。
+# 入库的是导入结果 data/manual/imported/*.json（重建依据），原件由负责人本地保存。
+*.xlsx
+*.xls
+
 # ===== 模型权重（体积大）=====
 models/*
 !models/.gitkeep

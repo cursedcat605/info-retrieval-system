@@ -31,6 +31,7 @@ from src.database.repo import (
     connect,
     default_db_path,
     facet_counts,
+    is_manual_source,
     stats,
     stats_overview,
 )
@@ -90,8 +91,11 @@ Conn = Depends(get_conn)
 # 响应装饰：补上前端需要的派生字段
 # --------------------------------------------------------------------------- #
 def _image_local_url(image: Optional[str]) -> Optional[str]:
-    """原图在本地缓存中的访问地址（文件名含中文，需 URL 编码）。"""
-    if not image:
+    """原图在本地缓存中的访问地址（文件名含中文，需 URL 编码）。
+
+    手工表格来源没有原图，返回 ``None`` 让前端隐藏图片区域。
+    """
+    if not image or is_manual_source(image):
         return None
     return f"/images/{quote(str(image))}"
 
@@ -108,7 +112,10 @@ def _source_url(notice_id: Optional[str], notice_title: Optional[str]) -> str:
 def _decorate(item: Dict[str, Any]) -> Dict[str, Any]:
     """给一条记录补上图片地址与来源链接（列表与详情共用）。"""
     item["image_local_url"] = _image_local_url(item.get("image"))
-    item["source_url"] = _source_url(item.get("notice_id"), item.get("notice_title"))
+    if is_manual_source(item.get("image")):
+        item["source_url"] = ""
+    else:
+        item["source_url"] = _source_url(item.get("notice_id"), item.get("notice_title"))
     return item
 
 

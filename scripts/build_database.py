@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.database.manual import sync_manual_sources  # noqa: E402
 from src.database.repo import (  # noqa: E402
     connect,
     default_db_path,
@@ -61,6 +62,17 @@ def read_jsonl(path: Path) -> List[Dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="把 data/processed 的结构化数据写入 SQLite")
     parser.add_argument("--processed-dir", type=Path, default=None, help="默认 data/processed")
+    parser.add_argument(
+        "--manual-dir",
+        type=Path,
+        default=None,
+        help="手工来源快照目录，默认 data/manual/imported",
+    )
+    parser.add_argument(
+        "--keep-manual-duplicates",
+        action="store_true",
+        help="加载手工快照时保留重复行（默认跳过）",
+    )
     parser.add_argument("--db", type=Path, default=None, help="数据库文件，默认 config/database.sqlite_path")
     parser.add_argument("--reset", action="store_true", help="清空所有表后重建")
     parser.add_argument("--query", type=str, default=None, help="建库后执行一次检索自检")
@@ -68,6 +80,7 @@ def main() -> int:
     args = parser.parse_args()
 
     processed = args.processed_dir.resolve() if args.processed_dir else data_dir("processed")
+    manual_dir = args.manual_dir.resolve() if args.manual_dir else data_dir("manual", "imported")
     images_path = processed / "images.jsonl"
     records_path = processed / "selects_records.jsonl"
 
@@ -104,6 +117,15 @@ def main() -> int:
         written += replace_records(conn, image, rows)
     conn.commit()
 
+    # 手工表格导入的来源快照与 OCR 产物一起重建，--reset 不会丢手工数据。
+    manual = sync_manual_sources(
+        conn,
+        manual_dir,
+        prune=True,
+        keep_duplicates=args.keep_manual_duplicates,
+    )
+    conn.commit()
+
     indexed = rebuild_fts(conn)
 
     # 派生列（拼音、岗位类别、学历层次）可由原始字段重算，随入库一并回填
@@ -115,12 +137,18 @@ def main() -> int:
     summary["images_input"] = len(images)
     summary["records_input"] = len(records)
     summary["records_written"] = written
+    summary["manual"] = manual
     summary["derived"] = derived
     summary["facets"] = {k: len(v) for k, v in facets(conn).items()}
     (db_path.parent / "_db_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
+    logger.info(
+        "手工来源：%d 个，写入 %d 条，跳过重复 %d 条，清理失效来源 %d 个",
+        manual["sources"], manual["written"], manual["skipped_duplicates"],
+        manual["pruned_sources"],
+    )
     logger.info(
         "入库完成：图片 %d，记录 %d（写入 %d），FTS 索引 %d，派生列回填 %d，数据库 %s",
         summary["images"], summary["records"], written, indexed,

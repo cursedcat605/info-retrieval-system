@@ -21,6 +21,15 @@ from .schema import SEARCHABLE_COLUMNS, create_schema, drop_schema, ensure_colum
 
 logger = get_logger("database")
 
+#: 手工导入来源的 ``images.image`` 前缀；这类来源没有原图，统计时不计入图片数
+MANUAL_IMAGE_PREFIX = "manual:"
+
+
+def is_manual_source(image: Any) -> bool:
+    """判断记录是否来自手工表格（而非 OCR 图片）。"""
+    return str(image or "").startswith(MANUAL_IMAGE_PREFIX)
+
+
 #: 记录表的业务列（写入时用）
 RECORD_COLUMNS: Sequence[str] = (
     "image",
@@ -587,8 +596,14 @@ def facet_counts(
 
 
 def stats(conn: sqlite3.Connection) -> Dict[str, Any]:
-    """整体数据概览：图片数、记录数、各核心字段填充率。"""
-    images = conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+    """整体数据概览：图片数、记录数、各核心字段填充率。
+
+    手工导入来源没有原图，只作为记录容器存在，因此不计入 ``images``。
+    """
+    images = conn.execute(
+        "SELECT COUNT(*) FROM images WHERE substr(image, 1, ?) != ?",
+        (len(MANUAL_IMAGE_PREFIX), MANUAL_IMAGE_PREFIX),
+    ).fetchone()[0]
     latest_release_time = conn.execute(
         "SELECT MAX(release_time) FROM images "
         "WHERE COALESCE(release_time, '') != ''"
@@ -667,6 +682,7 @@ __all__ = [
     "FACET_DIMENSIONS",
     "FILTER_COLUMNS",
     "IMAGE_COLUMNS",
+    "MANUAL_IMAGE_PREFIX",
     "RECORD_COLUMNS",
     "SORT_ORDERS",
     "connect",
@@ -675,6 +691,7 @@ __all__ = [
     "facets",
     "get_record",
     "init_db",
+    "is_manual_source",
     "match_ids",
     "rebuild_fts",
     "replace_records",

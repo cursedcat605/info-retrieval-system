@@ -39,6 +39,7 @@ flowchart LR
 | ② 识别 | 图片 OCR 转文字 | `src/ocr/` → `data/interim/ocr_text/` |
 | ③ 清洗 | 文本纠错、去噪、分词 | `src/preprocess/`、`src/nlp/` |
 | ④ 入库 | 结构化并写入数据库 | `src/database/` → `data/db/`、`data/processed/` |
+| ④' 补充 | 手工整理的表格（Excel/CSV）直接并入同一张表 | `data/manual/` → `data/manual/imported/` |
 | ⑤ 检索 | 关键词 / 条件检索服务 | `src/search/`、`web/backend/` |
 | ⑥ 展示 | 前端检索界面 | `web/frontend/` |
 
@@ -105,6 +106,8 @@ flowchart LR
 | `data/interim/ocr_text/` | OCR 输出的**原始**文本（未清洗） | 保留识别错误，便于对比优化 |
 | `data/processed/` | 清洗、结构化后的数据（字段化 CSV/JSON） | 入库前的最终产物 |
 | `data/db/` | SQLite/数据库文件、全文索引文件 | 可被检索服务直接打开 |
+| `data/manual/` | 手工整理的去向表格与录入模板 | 见 5.2 节，走 `scripts/import_records.py` 入库 |
+| `data/manual/imported/` | 手工表格的导入快照（`*.json`） | **必须提交**，`build_database.py --reset` 靠它恢复手工数据 |
 
 ### 3. `src/crawler/` — 数据采集
 - **登录/会话管理**：处理信息门户的登录、验证码、Cookie 保持。
@@ -167,6 +170,39 @@ fields:                                   # ② 字段层：改抽取值
 - ⚠️ `config/corrections.yaml` **会进 git**（`data/` 则被忽略），所以里面**不要写真实姓名**；
   需要按人定位时优先用 `block_index`。
 
+#### 5.2 手工表格导入（`scripts/import_records.py`）
+
+除 OCR 流水线外，人工整理好的去向表格（`.xlsx` / `.csv`）可以直接并入同一张 `selects_records` 表，
+检索、筛选、统计、详情页与 OCR 记录**完全同权**。
+
+```powershell
+# 先看报告：不写库，只统计能导入多少、哪些行与已有记录重复
+python scripts/import_records.py 选调生去向汇总.xlsx --dry-run
+
+# 正式导入（默认跳过与库内已有记录重复的行）
+python scripts/import_records.py 选调生去向汇总.xlsx
+
+# 同名但确实不是同一人时，用 --keep-duplicates 全量保留
+python scripts/import_records.py 选调生去向汇总.xlsx --keep-duplicates
+```
+
+- **表格格式**：表头写中英文均可（`姓名/name`、`去向单位/destination_org`、`省份/province`、
+  `城市/city`、`届别/cohort`、`学历/degree`…），缺失值写 `-` 或留空即可；
+  中英文双表头、表头上方的说明行会自动跳过。
+- **来源行**：每条导入来源在 `images` 表里登记为 `manual:<项目内相对路径>`
+  （如 `manual:选调生去向汇总.xlsx`），`ocr_engine="manual"`。这类来源**不计入图片数**，
+  前端不渲染原图、不给原文外链，详情页显示“这条记录没有可用的原图”。
+- **去重**：同姓名 + 去向单位相同/高度相似（去标点后相等、包含或相似度 ≥ 0.82），
+  或同姓名 + 届别兼容 + 同省/同市 → 判为重复并跳过；同名但**省份完全不同**的会作为独立记录保留
+  （通常不是同一人，如两个“邢越”）。同文件内的同名行会先合并缺失字段，再整体判重。
+- **可重建**：导入成功后会把最终记录写成 `data/manual/imported/<文件名>.json` 快照。
+  `build_database.py` 在写库后会调用 `sync_manual_sources(prune=True)` 按快照重放，
+  因此 `--reset` **不会**丢手工数据；快照被删掉时，库里对应的 `manual:` 来源会被清理。
+- 重复导入同一文件是幂等的：先按 `image` 删除旧记录再整体重写。
+- **原件不入库**：`.xlsx` / `.xls` 已在 `.gitignore` 里排除（含真实姓名），
+  只提交 `data/manual/imported/*.json` 快照；换机器时把原件放回同一相对路径，
+  即可用 `import_records.py` 重新导入，或直接靠快照由 `build_database.py` 恢复。
+
 ### 6. `src/nlp/` — 中文自然语言处理
 - 关键信息抽取：**姓名、届别、所属学院、专业、去向单位、城市、岗位**（核心 7 字段），另附省份、学历、届别年份。
 - `gazetteer.py`：省份/城市/学院/机构后缀/专业等白名单词典，决定“哪些字符串**有可能**是目标字段”。
@@ -201,6 +237,7 @@ fields:                                   # ② 字段层：改抽取值
 ### 7. `src/database/` — 数据入库
 - `schema.py`：SQLite 表结构 DDL —— `images`（图片/通知元数据）、`selects_records`（7 个核心字段）、`selects_fts`（FTS5 全文索引，trigram 分词）。
 - `repo.py`：连接、UPSERT、全量重建 FTS、检索、分面统计（供前端筛选面板）。
+- `manual.py`：手工表格（Excel/CSV）导入、字段归一（省份/城市/届别）、去重合并、快照读写（见 5.2 节）。
 - 提供增删改查接口，将 `data/processed/` 结构化数据写入 `data/db/selects.sqlite`。
 
 ### 8. `src/search/` — 检索逻辑
@@ -222,6 +259,9 @@ fields:                                   # ② 字段层：改抽取值
   支持 `--corrections <路径>` 换规则文件、`--no-corrections` 关闭纠错做对照。
 - `derive_fields.py`：派生姓名拼音 / 岗位类别 / 学历层次（支持 `--force` 重算）。
 - `build_database.py`：写入 SQLite + 重建 FTS5 索引（已实现）。
+  写库后还会按 `data/manual/imported/*.json` 重放手工表格数据，
+  所以 `--reset` 只重建 OCR 部分，手工数据仍在（可用 `--manual-dir` 换快照目录）。
+- `import_records.py`：把人工整理的 `.xlsx`/`.csv` 去向表导入数据库（`--dry-run` 只出报告），见 5.2 节。
 - `check_search.py` / `check_api.py` / `smoke_live.py`：检索层与接口自检（见第八章）。
 - `serve.ps1` / `serve-hidden.vbs`：Web 服务守护进程（后台运行、崩溃重启、可开机自启）。
 - `tunnel.ps1` / `tunnel-hidden.vbs`：Cloudflare 快速隧道守护进程，把本机服务临时发布到公网（见 8.1.2）。
@@ -306,7 +346,7 @@ Jupyter Notebook，用于数据分布探索、OCR 效果评估、检索效果调
 | 全文检索 | SQLite FTS5 / Elasticsearch | ✅ FTS5 |
 | Web 服务 | FastAPI（后端）、Vue / React / **原生 HTML**（前端） | ✅ FastAPI + 原生 HTML/JS |
 | 图表 | ECharts（CDN），断网时自动降级为纯 CSS 条形图 | ✅ |
-| | 测试 | pytest + FastAPI TestClient | ✅ 175 项 |
+| | 测试 | pytest + FastAPI TestClient | ✅ 236 项 |
 | 定时任务 | APScheduler / 系统计划任务 | ⬜ 待实现 |
 
 ---
@@ -333,6 +373,10 @@ python scripts/run_ocr.py           # ② OCR 识别 → data/interim/ocr_text/
 python scripts/extract_records.py   # ③ 清洗 + 字段抽取 → data/processed/
 python scripts/derive_fields.py     # ④ 派生姓名拼音 / 岗位类别 / 学历层次
 python scripts/build_database.py --reset   # ⑤ 入库 + 建 FTS5 索引 → data/db/selects.sqlite
+
+# 4.1 可选：把手头整理好的去向表格（Excel/CSV）也并进库
+python scripts/import_records.py 选调生去向汇总.xlsx --dry-run   # 先看报告
+python scripts/import_records.py 选调生去向汇总.xlsx             # 确认后写入
 
 # 5. 启动 Web 服务（检索界面 + API）
 python -m web.backend.main          # → http://127.0.0.1:8000
