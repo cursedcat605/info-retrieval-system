@@ -968,6 +968,82 @@ a.chip:hover { text-decoration: none; }
 }
 .toolbar select:focus { border-color: var(--blue-light); }
 
+/* 胶囊下拉选择器：原生 <select> 只做取值载体（.pillsel-native），
+   可见的是按钮 + 浮层，展开面板才能跟站内配色保持一致。 */
+.pillsel { position: relative; display: inline-flex; }
+.pillsel[hidden] { display: none; }
+.pillsel-native { display: none; }
+.pillsel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .16s, border-color .16s, color .16s, box-shadow .16s;
+}
+.pillsel-btn:hover { background: #eef6fc; border-color: #bcd7ea; color: var(--blue-deep); }
+.pillsel-btn:focus-visible { outline: none; border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(76, 143, 202, .18); }
+.pillsel.open .pillsel-btn { border-color: var(--blue-light); color: var(--blue-deep); box-shadow: 0 0 0 3px rgba(76, 143, 202, .14); }
+.pillsel-caret {
+  flex: none;
+  width: 11px;
+  height: 7px;
+  color: var(--muted);
+  transition: transform .18s, color .18s;
+}
+.pillsel-btn:hover .pillsel-caret,
+.pillsel.open .pillsel-caret { color: var(--blue); }
+.pillsel.open .pillsel-caret { transform: rotate(180deg); }
+
+.pillsel-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  display: none;
+  min-width: 100%;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 18px 40px rgba(24, 60, 90, .16);
+}
+.pillsel.open .pillsel-menu { display: block; }
+.pillsel.align-end .pillsel-menu { left: auto; right: 0; }
+.pillsel-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.pillsel-option.is-active { background: #f0f7fc; color: var(--blue-deep); }
+.pillsel-option.is-selected { color: var(--blue-deep); font-weight: 600; }
+.pillsel-check {
+  width: 11px;
+  height: 11px;
+  margin-left: auto;
+  flex: none;
+  color: var(--blue-light);
+}
+
 .viewswitch {
   display: inline-flex;
   padding: 3px;
@@ -1620,7 +1696,6 @@ mark {
   color: var(--muted-2);
 }
 .footer .proj { font-family: var(--serif); color: #3f6079; letter-spacing: .4px; }
-.footer .spacer { margin-left: auto; }
 
 .toast {
   position: fixed;

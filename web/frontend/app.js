@@ -564,7 +564,18 @@
   }
 
   // ------------------------------------------------------------ 其它绑定 //
+  /** 排序 / 每页条数的选项由 /api/config 动态生成，重建后要让胶囊下拉重读一遍。 */
+  function refreshSelects() {
+    ["#sort", "#page-size"].forEach(function (sel) {
+      var view = IRS.pillSelect($(sel));
+      if (view) view.refresh();
+    });
+  }
+
   function bindUI() {
+    // 原生 <select> 的展开面板跟站内配色不一致，换成胶囊下拉（见 common.js）
+    refreshSelects();
+
     var form = $("#search-form");
     if (form) {
       form.addEventListener("submit", function (ev) {
@@ -698,6 +709,7 @@
         var sizeSel = $("#page-size");
         if (sizeSel) sizeSel.value = String(state.page_size);
       }
+      refreshSelects();
       appliedKey = filtersKey(state.filters);
       run(restored.page || 1);
     });

@@ -412,6 +412,196 @@
     });
   }
 
+  // ------------------------------------------------------- 胶囊下拉选择器 //
+  /* 原生 <select> 的展开面板由浏览器/系统绘制（灰底高亮、系统字体），配色与站内
+     对不上。这里保留 <select> 作为取值与 change 事件的载体，另外渲染
+     「胶囊按钮 + 浮层列表」；用户选中后回写 <select> 并派发 change，
+     页面原有的 select.addEventListener("change", …) 无需改动。 */
+  var selectSeq = 0;
+
+  var CARET = '<svg class="pillsel-caret" viewBox="0 0 12 8" aria-hidden="true" focusable="false">' +
+    '<path d="M1.2 1.6 6 6.4l4.8-4.8" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var CHECK = '<svg class="pillsel-check" viewBox="0 0 12 10" aria-hidden="true" focusable="false">' +
+    '<path d="M1 5.2 4.3 8.4 11 1.6" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function pillSelect(select) {
+    if (!select) return null;
+    if (select._pillsel) return select._pillsel;
+
+    var name = "pillsel" + (++selectSeq);
+    var expanded = false;
+    var activeIndex = -1;
+
+    var wrap = document.createElement("div");
+    wrap.className = "pillsel";
+
+    var labelEl = select.id ? document.querySelector('label[for="' + select.id + '"]') : null;
+    var title = labelEl ? labelEl.textContent.trim() : "";
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pillsel-btn";
+    btn.setAttribute("role", "combobox");
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", name + "-menu");
+    if (title) btn.setAttribute("aria-label", title);
+
+    var label = document.createElement("span");
+    label.className = "pillsel-label";
+    btn.appendChild(label);
+    btn.insertAdjacentHTML("beforeend", CARET);
+
+    var menu = document.createElement("ul");
+    menu.className = "pillsel-menu";
+    menu.id = name + "-menu";
+    menu.setAttribute("role", "listbox");
+    if (title) menu.setAttribute("aria-label", title);
+
+    select.classList.add("pillsel-native");
+    select.setAttribute("tabindex", "-1");
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    wrap.appendChild(select);
+
+    function items() {
+      return Array.prototype.slice.call(menu.children);
+    }
+
+    /** 把 <select> 当前值同步到按钮文案与列表的选中态。 */
+    function sync() {
+      var opt = select.options[select.selectedIndex];
+      label.textContent = opt ? opt.textContent : "";
+      items().forEach(function (li) {
+        var on = li.getAttribute("data-value") === select.value;
+        li.classList.toggle("is-selected", on);
+        li.setAttribute("aria-selected", on ? "true" : "false");
+        var mark = li.querySelector(".pillsel-check");
+        if (on && !mark) li.insertAdjacentHTML("beforeend", CHECK);
+        else if (!on && mark) mark.parentNode.removeChild(mark);
+      });
+    }
+
+    function render() {
+      menu.innerHTML = Array.prototype.map.call(select.options, function (opt, i) {
+        return '<li class="pillsel-option" role="option" id="' + name + "-opt-" + i + '"' +
+          ' data-value="' + esc(opt.value) + '" aria-selected="false">' + esc(opt.textContent) + "</li>";
+      }).join("");
+      activeIndex = -1;
+      sync();
+      // 选项还没拿到（例如排序项要等 /api/config）时先不显示空胶囊
+      wrap.hidden = !select.options.length;
+    }
+
+    function markActive() {
+      var list = items();
+      list.forEach(function (li, i) { li.classList.toggle("is-active", i === activeIndex); });
+      if (list[activeIndex]) btn.setAttribute("aria-activedescendant", list[activeIndex].id);
+      else btn.removeAttribute("aria-activedescendant");
+    }
+
+    function moveTo(index) {
+      var list = items();
+      if (!list.length) return;
+      activeIndex = Math.max(0, Math.min(list.length - 1, index));
+      markActive();
+      var node = list[activeIndex];
+      if (node.offsetTop < menu.scrollTop) menu.scrollTop = node.offsetTop;
+      else if (node.offsetTop + node.offsetHeight > menu.scrollTop + menu.clientHeight) {
+        menu.scrollTop = node.offsetTop + node.offsetHeight - menu.clientHeight;
+      }
+    }
+
+    function onOutside(ev) {
+      if (!wrap.contains(ev.target)) close();
+    }
+
+    function open() {
+      if (expanded || !select.options.length) return;
+      expanded = true;
+      wrap.classList.add("open");
+      btn.setAttribute("aria-expanded", "true");
+      // 贴近视口右缘时改为右对齐，避免浮层溢出被裁切
+      wrap.classList.remove("align-end");
+      if (menu.getBoundingClientRect().right > document.documentElement.clientWidth - 8) {
+        wrap.classList.add("align-end");
+        if (menu.getBoundingClientRect().left < 8) wrap.classList.remove("align-end");
+      }
+      document.addEventListener("pointerdown", onOutside, true);
+      moveTo(Math.max(0, select.selectedIndex));
+    }
+
+    function close(focus) {
+      if (!expanded) return;
+      expanded = false;
+      wrap.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.removeAttribute("aria-activedescendant");
+      items().forEach(function (li) { li.classList.remove("is-active"); });
+      activeIndex = -1;
+      document.removeEventListener("pointerdown", onOutside, true);
+      if (focus) btn.focus();
+    }
+
+    function choose(index) {
+      var node = items()[index];
+      if (!node) return;
+      var value = node.getAttribute("data-value");
+      close(true);
+      if (select.value !== value) {
+        select.value = value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      sync();
+    }
+
+    btn.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      if (expanded) close(true);
+      else open();
+    });
+
+    btn.addEventListener("keydown", function (ev) {
+      var key = ev.key;
+      if (!expanded) {
+        if (key === "ArrowDown" || key === "ArrowUp" || key === "Enter" ||
+            key === " " || key === "Spacebar") {
+          ev.preventDefault();
+          open();
+        }
+        return;
+      }
+      if (key === "ArrowDown") { ev.preventDefault(); moveTo(activeIndex + 1); }
+      else if (key === "ArrowUp") { ev.preventDefault(); moveTo(activeIndex - 1); }
+      else if (key === "Home") { ev.preventDefault(); moveTo(0); }
+      else if (key === "End") { ev.preventDefault(); moveTo(items().length - 1); }
+      else if (key === "Enter" || key === " " || key === "Spacebar") { ev.preventDefault(); choose(activeIndex); }
+      else if (key === "Escape") { ev.preventDefault(); close(true); }
+      else if (key === "Tab") { close(); }
+    });
+
+    menu.addEventListener("click", function (ev) {
+      var node = ev.target.closest ? ev.target.closest(".pillsel-option") : null;
+      if (node) choose(items().indexOf(node));
+    });
+
+    menu.addEventListener("mousemove", function (ev) {
+      var node = ev.target.closest ? ev.target.closest(".pillsel-option") : null;
+      if (!node) return;
+      var index = items().indexOf(node);
+      if (index !== activeIndex) { activeIndex = index; markActive(); }
+    });
+
+    var view = { element: wrap, refresh: render, sync: sync, open: open, close: close };
+    select._pillsel = view;
+    render();
+    return view;
+  }
+
   function ready(fn) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", fn);
@@ -454,6 +644,7 @@
     searchParams: searchParams,
     goSearch: goSearch,
     filterSummary: filterSummary,
+    pillSelect: pillSelect,
     ready: ready
   };
 })(window);
