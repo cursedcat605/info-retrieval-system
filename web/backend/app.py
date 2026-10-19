@@ -64,6 +64,10 @@ _PORTAL_LIST_URL = (
 _PORTAL_DETAIL_URL = get(["web", "portal_detail_url"], "") or ""
 _PORTAL_HOME = get(["web", "portal_home"], "https://my.muc.edu.cn/page/11")
 
+#: 顶栏「数据更新至」的日期；为空时前端回退到库中最新通知的发布时间。
+#: 手工导入的来源没有发布时间，自动值会停在最后一次爬取的日期，故允许显式指定。
+_DATA_UPDATED = str(get(["web", "data_updated"], "") or "").strip()
+
 
 # --------------------------------------------------------------------------- #
 # 依赖
@@ -257,6 +261,9 @@ def create_app() -> FastAPI:
     @app.get("/api/health", summary="健康检查")
     def api_health(conn: sqlite3.Connection = Conn) -> Dict[str, Any]:
         info = stats(conn)
+        # 配置里指定了「数据更新至」时以它为准，前端据此显示顶栏日期
+        if _DATA_UPDATED:
+            info["data_updated"] = _DATA_UPDATED
         return {
             "status": "ok",
             "db_path": str(default_db_path()),

@@ -325,7 +325,9 @@
     if (!slots.length) return;
     getJSON(API + "/health").then(function (data) {
       var stats = (data && data.stats) || {};
-      var raw = String(stats.latest_release_time || "").trim();
+      // stats.data_updated 来自 config.yaml 的 web.data_updated（人工标注的数据截止日），
+      // 没配才回退到库中最新通知的发布时间
+      var raw = String(stats.data_updated || stats.latest_release_time || "").trim();
       var dateMatch = raw.match(/(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
       // 解析不出具体日期时（旧版接口/字段缺失）就只报收录量，绝不显示“暂无日期”
       var latest = dateMatch

@@ -388,6 +388,10 @@ python -m pytest tests -q           # 单元 / 集成测试 175 项
 ```
 
 > 端口、监听地址、允许的 CORS 来源都在 `config/config.yaml` 的 `web:` 段落中配置。
+>
+> 各页顶栏的「数据更新至 YYYY-MM-DD」取 `config/config.yaml` 的 `web.data_updated`；
+> 留空则自动回退为库中最新一条通知的发布时间（手工导入的记录没有发布时间，
+> 自动值会停在最后一次爬取的日期，所以建议显式填写数据截止日）。
 
 ---
 
