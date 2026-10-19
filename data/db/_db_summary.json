@@ -1,19 +1,19 @@
 {
   "images": 92,
-  "records": 430,
+  "records": 455,
   "empty_records": 0,
   "fill_rate": {
-    "name": 0.986,
-    "cohort": 0.919,
-    "college": 0.521,
-    "major": 0.412,
-    "destination_org": 0.947,
-    "city": 0.691,
-    "position": 0.314,
-    "province": 0.916,
-    "degree": 0.344,
+    "name": 1.0,
+    "cohort": 0.855,
+    "college": 0.552,
+    "major": 0.459,
+    "destination_org": 0.862,
+    "city": 0.798,
+    "position": 0.178,
+    "province": 0.932,
+    "degree": 0.323,
     "position_category": 1.0,
-    "degree_level": 0.344
+    "degree_level": 0.323
   },
   "db_path": "E:/个人proj/信息检索系统/data/db/selects.sqlite",
   "fts_indexed": 155,
@@ -39,8 +39,8 @@
   },
   "latest_release_time": "2025-01-08 11:52",
   "manual": {
-    "file": "选调生去向汇总.xlsx",
-    "imported": 275,
-    "skipped_duplicates": 13
+    "file": "去向汇总.xlsx",
+    "imported": 326,
+    "skipped_duplicates": 0
   }
 }
