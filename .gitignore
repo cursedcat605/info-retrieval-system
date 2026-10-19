@@ -16,12 +16,10 @@ env/
 data/raw/cookies.json
 cookies.json
 
-# ===== 数据（原始数据不入库）=====
-# 爬取的原图、OCR 文本与中间产物一律不提交：体积大、且含未脱敏的门户原文。
-data/raw/images/
-data/raw/metadata/
-data/interim/
-data/processed/
+# ===== 数据 =====
+# 仓库为私有，原图 / OCR 文本 / 中间产物一并入库（约 65 MB），
+# 克隆下来即可跳过爬取与 OCR 直接复现。
+# 注意：这些内容含未脱敏的门户原文，**变更仓库可见性前必须先脱敏**。
 
 # ===== 数据库（例外：只提交构建好的最终产物）=====
 # 仓库已转为私有，因此把构建好的 SQLite 库随代码一起提交，
@@ -35,23 +33,14 @@ data/db/*
 *.sqlite-wal
 *.sqlite-shm
 
-# ===== 手工整理表格（原件不入库）=====
-# 与 data/raw 同理：xlsx 原件含真实姓名，**变更仓库可见性前必须先脱敏**。
-# 入库的是导入结果 data/manual/imported/*.json（重建依据），原件由负责人本地保存。
-*.xlsx
-*.xls
-
-# ===== 模型权重（体积大）=====
-models/*
-!models/.gitkeep
+# ===== 手工整理表格 =====
+# xlsx 原件随仓库保存（私有库），与 data/manual/imported/*.json 互为校验。
+# 注意：原件含真实姓名，**变更仓库可见性前必须先脱敏**。
 
 # ===== 日志 =====
-logs/*.log
-logs/*.log.*
-logs/*.txt
-logs/*.jsonl
+# 运行日志随仓库保存，便于排障（含已失效的临时隧道地址，不构成泄露）。
+# 仅排除运行期标记文件 logs/*.stop。
 logs/*.stop
-!logs/.gitkeep
 
 # ===== Notebook 检查点 =====
 .ipynb_checkpoints/
@@ -61,9 +50,10 @@ logs/*.stop
 .idea/
 .DS_Store
 Thumbs.db
+# Office 打开文档时生成的锁文件（~$xxx.xlsx）
+~$*
 
-# ===== AI 编码工具产物（与系统运行无关）=====
-# .agents/ 是第三方技能包（约 3.6 MB），skills-lock.json 是工具自己的锁文件。
-.agents/
+# ===== AI 编码工具产物 =====
+# .agents/ 是第三方技能包（约 3.5 MB），随仓库保存以便在新机器上直接可用。
+# .claude/ 为本地会话缓存，仍不入库。
 .claude/
-skills-lock.json

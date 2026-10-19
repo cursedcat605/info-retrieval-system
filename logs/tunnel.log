@@ -1,0 +1,16 @@
+﻿2026-09-29 22:55:53  启动隧道：C:\Users\Celestine\AppData\Local\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8000
+2026-09-29 22:56:45  启动隧道：C:\Users\Celestine\AppData\Local\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8000
+2026-09-29 22:56:50  隧道就绪：https://knowledgestorm-juice-ppm-conflicts.trycloudflare.com
+2026-09-29 22:57:02  收到停止请求：结束 cloudflared PID 22912
+2026-09-29 22:57:02  检测到停止标记，守护进程退出
+2026-09-29 22:57:02  守护进程结束
+2026-10-01 21:35:05  启动隧道：C:\Users\Celestine\AppData\Local\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8000
+2026-10-01 21:35:13  隧道就绪：https://impossible-poems-solution-downtown.trycloudflare.com
+2026-10-12 19:13:08  启动隧道：C:\Users\Celestine\AppData\Local\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8000
+2026-10-12 19:13:13  隧道就绪：https://awesome-heather-mom-bool.trycloudflare.com
+2026-10-12 19:49:51  收到停止请求：结束 cloudflared PID 34940
+2026-10-12 19:49:52  检测到停止标记，守护进程退出
+2026-10-12 19:49:52  守护进程结束
+2026-10-12 19:54:54  收到停止请求：没有在运行的 cloudflared 进程
+2026-10-12 20:11:50  启动隧道：C:\Users\Celestine\AppData\Local\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8000
+2026-10-12 20:11:56  隧道就绪：https://join-scholar-temperature-bob.trycloudflare.com

@@ -1,0 +1,6 @@
+2026-09-28 22:23:26,571 [INFO] run_ocr: 开始 OCR：92 张图片，目录 E:\个人proj\信息检索系统\data\raw\images
+2026-09-28 22:23:26,572 [INFO] run_ocr: 输出目录：E:\个人proj\信息检索系统\data\interim\ocr_text
+2026-09-28 22:23:46,383 [INFO] run_ocr: 汇总已写入 E:\个人proj\信息检索系统\data\interim\ocr_text\_ocr_summary.json
+2026-09-28 22:24:17,985 [INFO] run_ocr: 开始 OCR：92 张图片，目录 E:\个人proj\信息检索系统\data\raw\images
+2026-09-28 22:24:17,986 [INFO] run_ocr: 输出目录：E:\个人proj\信息检索系统\data\interim\ocr_text
+2026-09-28 22:31:52,144 [INFO] run_ocr: 汇总已写入 E:\个人proj\信息检索系统\data\interim\ocr_text\_ocr_summary.json

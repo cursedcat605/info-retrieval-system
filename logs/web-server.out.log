@@ -1,0 +1,291 @@
+→ 服务地址：http://127.0.0.1:8000
+→ 接口文档：http://127.0.0.1:8000/docs
+INFO:     127.0.0.1:60631 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60631 - "GET /home.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54397 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51356 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53652 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54397 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60631 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51356 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57634 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64950 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63865 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57634 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57634 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63865 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64950 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64950 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64950 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63865 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57634 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57634 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57634 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64950 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63865 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52473 - "GET /search.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52473 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55996 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64941 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52473 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64941 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55996 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52473 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53840 - "GET /api/search?sort=relevance&page_size=20&page=3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53840 - "GET /api/search?sort=relevance&page_size=20&page=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53840 - "GET /api/search?sort=relevance&page_size=20&page=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53840 - "GET /api/search?sort=relevance&page_size=20&page=9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51668 - "GET /api/search?sort=relevance&page_size=20&page=11 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51668 - "GET /api/search?sort=relevance&page_size=20&page=13 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49692 - "GET /api/search?sort=relevance&page_size=20&page=15 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56918 - "GET /detail.html?id=957 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56918 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53170 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65084 - "GET /detail.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65084 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53170 - "GET /api/record/957 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56920 - "GET /api/search?sort=relevance&page_size=20&page=17 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56920 - "GET /api/search?sort=relevance&page_size=20&page=19 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49877 - "GET /api/search?sort=relevance&page_size=20&page=21 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54803 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54803 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55976 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59866 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59866 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54803 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55976 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63167 - "GET /stats.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63167 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56809 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53256 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53256 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56809 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57417 - "GET /search.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65048 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:58470 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57417 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65048 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58470 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57417 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65048 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58087 - "GET /search.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58088 - "GET /search.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60984 - "GET /search.html?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60984 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63170 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54334 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63170 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54334 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60984 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63170 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET /stats.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64237 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61314 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60500 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60500 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64237 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60500 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60500 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61314 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64237 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56294 - "GET /search.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56294 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63996 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51275 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56294 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51275 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63996 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56294 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64677 - "GET /detail.html?id=782 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64677 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65098 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53972 - "GET /detail.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:65098 - "GET /api/record/782 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53972 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51599 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51599 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56705 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56260 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56260 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51599 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56705 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63242 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63242 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54109 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62458 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62458 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63242 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54109 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55971 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55971 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57053 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55971 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57053 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63311 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63311 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60543 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60534 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60543 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60534 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63311 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60693 - "GET /search.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49671 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60693 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54482 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49671 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54482 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60693 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49671 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59328 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57166 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59812 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59328 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57166 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59328 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59812 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59818 - "GET /stats.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59818 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50018 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56134 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50018 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56134 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56134 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50018 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56134 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59818 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56134 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59818 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50018 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61618 - "GET /search.html?q=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61618 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57438 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52170 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61618 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52170 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61618 - "GET /api/search?q=2&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52910 - "GET /api/search?q=%2F*%2F**&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56054 - "GET /api/search?q=%EF%BC%88%EF%BC%89&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63970 - "GET /search.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49828 - "GET /search.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49828 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50744 - "GET /common.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57833 - "GET /app.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49828 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64011 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49828 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57833 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50744 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53680 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54704 - "GET /api/search?sort=name_pinyin&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59326 - "GET /search.html?q=%EF%BC%88%EF%BC%89&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59326 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49851 - "GET /common.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54088 - "GET /app.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49851 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59326 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54088 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49851 - "GET /api/search?q=%EF%BC%88%EF%BC%89&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50070 - "GET /api/search?q=%EF%BC%88%EF%BC%89&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61803 - "GET /api/search?q=%E4%B8%AD%E5%9B%BD%E5%B0%91%E6%95%B0%E6%B0%91%E6%97%8F%E8%AF%AD%E8%A8%80%E6%96%87%E5%AD%A6%E5%AD%A6%E9%99%A2&sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63970 - "GET /search.html?sort=name_pinyin&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63970 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51375 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62945 - "GET /common.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51375 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62945 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51375 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63970 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62945 - "GET /api/search?sort=name_pinyin&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62945 - "GET /api/search?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53205 - "GET /search.html?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53205 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58243 - "GET /common.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65161 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53205 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58243 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65161 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53205 - "GET /api/search?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55938 - "GET /search.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53223 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53310 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:55938 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53223 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55938 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53223 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53310 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55938 - "GET /api/search?sort=relevance&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55938 - "GET /api/search?sort=cohort_asc&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59884 - "GET /search.html?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59884 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50483 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59825 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59825 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59825 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50483 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59825 - "GET /api/search?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59884 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56333 - "GET /api/search?sort=confidence_desc&page_size=20&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52581 - "GET /api/search?sort=confidence_desc&page_size=20&province=%E5%8C%97%E4%BA%AC%E5%B8%82&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62644 - "GET /api/search?sort=confidence_desc&page_size=20&province=%E6%B1%9F%E8%A5%BF%E7%9C%81&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62644 - "GET /detail.html?id=752 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58191 - "GET /common.js?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62644 - "GET /styles.css?v=12 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57765 - "GET /detail.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62644 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58191 - "GET /api/record/752 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58191 - "GET /images/20241016_246166_01_1016%E9%80%9A%E7%9F%A52.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60587 - "GET /stats.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:60587 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59923 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59643 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59923 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59643 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64089 - "GET /stats.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64089 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61658 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50455 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:61658 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50455 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58261 - "GET /stats.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:58261 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:51323 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63926 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:63926 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51323 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54095 - "GET /search.html?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54095 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52216 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64636 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54095 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64636 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50138 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52216 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54095 - "GET /api/search?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54095 - "GET /search.html?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52216 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54095 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50138 - "GET /app.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:52216 - "GET /api/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50138 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52216 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:54095 - "GET /api/suggest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50138 - "GET /api/search?sort=name_pinyin&page_size=50&page=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53767 - "GET /stats.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53767 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:49671 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56907 - "GET /stats.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56907 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49671 - "GET /api/stats?top_n=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59248 - "GET / HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59248 - "GET /styles.css?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:64335 - "GET /common.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62451 - "GET /home.js?v=12 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:62451 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64335 - "GET /api/stats?top_n=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59248 - "GET /api/search?sort=cohort_desc&page=1&page_size=6 HTTP/1.1" 200 OK

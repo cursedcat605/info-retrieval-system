@@ -1,0 +1,16 @@
+2026-10-18 16:02:44,593 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-0\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-18 16:02:44,692 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-0\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-18 16:03:53,058 [INFO] manual_import: 已保存手工来源快照：E:\个人proj\信息检索系统\data\manual\imported\选调生去向汇总.xlsx.json（275 条）
+2026-10-18 16:11:56,725 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-1\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-18 16:11:56,823 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-1\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-18 16:12:23,098 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-2\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-18 16:12:23,190 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-2\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-18 16:15:07,350 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-3\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-18 16:15:07,444 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-3\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-19 20:45:52,362 [INFO] manual_import: 已保存手工来源快照：E:\个人proj\信息检索系统\data\manual\imported\去向汇总.xlsx.json（326 条）
+2026-10-19 20:47:19,040 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-7\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-19 20:47:19,111 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-7\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-19 20:49:04,773 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-8\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-19 20:49:04,838 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-8\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）
+2026-10-19 20:57:35,271 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-10\test_import_file_skips_existin0\imported\sample.csv.json（2 条）
+2026-10-19 20:57:35,332 [INFO] manual_import: 已保存手工来源快照：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-10\test_sync_manual_sources_reloa0\imported\sample.csv.json（1 条）

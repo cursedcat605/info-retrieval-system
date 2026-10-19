@@ -1,0 +1,19 @@
+2026-09-28 22:33:53,168 [INFO] build_database: 已清空数据库表，准备重建：E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-28 22:33:53,200 [INFO] build_database: 入库完成：图片 92，记录 155（写入 155），FTS 索引 155，数据库 E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-28 22:33:53,202 [INFO] build_database: 检索自检 [湖南]：命中 6 条（模式 like）
+2026-09-28 22:34:45,276 [INFO] build_database: 已清空数据库表，准备重建：E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-28 22:34:45,305 [INFO] build_database: 入库完成：图片 92，记录 155（写入 155），FTS 索引 155，数据库 E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-28 22:34:45,307 [INFO] build_database: 检索自检 [株洲]：命中 1 条（模式 like）
+2026-09-29 12:28:56,571 [INFO] build_database: 已清空数据库表，准备重建：E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-29 12:28:56,640 [INFO] build_database: 入库完成：图片 92，记录 155（写入 155），FTS 索引 155，派生列回填 155，数据库 E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-29 12:45:01,373 [INFO] build_database: 已清空数据库表，准备重建：E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-29 12:45:01,430 [INFO] build_database: 入库完成：图片 92，记录 155（写入 155），FTS 索引 155，派生列回填 155，数据库 E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-29 12:50:24,130 [INFO] build_database: 已清空数据库表，准备重建：E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-09-29 12:50:24,190 [INFO] build_database: 入库完成：图片 92，记录 155（写入 155），FTS 索引 155，派生列回填 155，数据库 E:\个人proj\信息检索系统\data\db\selects.sqlite
+2026-10-19 19:09:12,785 [INFO] build_database: 手工来源：1 个，写入 275 条，跳过重复 0 条，清理失效来源 0 个
+2026-10-19 19:09:12,785 [INFO] build_database: 入库完成：图片 92，记录 430（写入 155），FTS 索引 430，派生列回填 430，数据库 C:\Users\Celestine\AppData\Local\Temp\ir_manual_check\check.sqlite
+2026-10-19 19:09:28,393 [INFO] build_database: 手工来源：1 个，写入 275 条，跳过重复 0 条，清理失效来源 0 个
+2026-10-19 19:09:28,393 [INFO] build_database: 入库完成：图片 92，记录 430（写入 155），FTS 索引 430，派生列回填 430，数据库 C:\Users\Celestine\AppData\Local\Temp\ir_manual_check\check.sqlite
+2026-10-19 20:49:54,238 [INFO] build_database: 已清空数据库表，准备重建：C:\Users\Celestine\AppData\Local\Temp\ir_clean\rebuild.sqlite
+2026-10-19 20:49:54,443 [INFO] build_database: 手工来源：1 个，写入 326 条，跳过重复 0 条，清理失效来源 0 个
+2026-10-19 20:49:54,443 [INFO] build_database: 入库完成：图片 92，记录 455（写入 129），FTS 索引 455，派生列回填 455，数据库 C:\Users\Celestine\AppData\Local\Temp\ir_clean\rebuild.sqlite

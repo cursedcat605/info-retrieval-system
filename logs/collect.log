@@ -1,0 +1,15 @@
+2026-09-28 21:49:24,571 [INFO] collect: 采集服务已启动：http://127.0.0.1:8765/collect （Ctrl+C 停止）
+2026-09-28 21:49:57,881 [INFO] collect: 采集服务已启动：http://127.0.0.1:8765/collect （Ctrl+C 停止）
+2026-09-28 21:50:13,863 [INFO] collect: 127.0.0.1 - "OPTIONS /collect?keyword=%E9%80%89%E8%B0%83%E5%88%86%E4%BA%AB HTTP/1.1" 204 -
+2026-09-28 21:50:19,513 [INFO] collect: 采集完成：{'keyword': '选调分享', 'notices': 3, 'images': 3, 'downloaded': 3, 'failed': 0}
+2026-09-28 21:50:19,514 [INFO] collect: 127.0.0.1 - "POST /collect?keyword=%E9%80%89%E8%B0%83%E5%88%86%E4%BA%AB HTTP/1.1" 200 -
+2026-09-28 21:50:27,709 [INFO] collect: 127.0.0.1 - "OPTIONS /collect?keyword=%E9%80%89%E8%B0%83%E7%BB%8F%E9%AA%8C%E5%88%86%E4%BA%AB HTTP/1.1" 204 -
+2026-09-28 21:52:15,406 [INFO] collect: 采集完成：{'keyword': '选调经验分享', 'notices': 89, 'images': 92, 'downloaded': 92, 'failed': 0}
+2026-09-28 21:52:15,406 [INFO] collect: 127.0.0.1 - "POST /collect?keyword=%E9%80%89%E8%B0%83%E7%BB%8F%E9%AA%8C%E5%88%86%E4%BA%AB HTTP/1.1" 200 -
+2026-09-28 21:53:04,803 [INFO] collect: 采集服务已启动：http://127.0.0.1:8765/collect （Ctrl+C 停止）
+2026-09-28 21:53:19,051 [INFO] collect: 127.0.0.1 - "OPTIONS /collect?keyword=%E9%80%89%E8%B0%83%E5%88%86%E4%BA%AB HTTP/1.1" 204 -
+2026-09-28 21:53:22,232 [INFO] collect: 采集完成：{'keyword': '选调分享', 'notices': 3, 'images': 3, 'downloaded': 3, 'failed': 0}
+2026-09-28 21:53:22,233 [INFO] collect: 127.0.0.1 - "POST /collect?keyword=%E9%80%89%E8%B0%83%E5%88%86%E4%BA%AB HTTP/1.1" 200 -
+2026-09-28 21:53:25,505 [INFO] collect: 127.0.0.1 - "OPTIONS /collect?keyword=%E9%80%89%E8%B0%83%E7%BB%8F%E9%AA%8C%E5%88%86%E4%BA%AB HTTP/1.1" 204 -
+2026-09-28 21:54:31,800 [INFO] collect: 采集完成：{'keyword': '选调经验分享', 'notices': 89, 'images': 92, 'downloaded': 92, 'failed': 0}
+2026-09-28 21:54:31,801 [INFO] collect: 127.0.0.1 - "POST /collect?keyword=%E9%80%89%E8%B0%83%E7%BB%8F%E9%AA%8C%E5%88%86%E4%BA%AB HTTP/1.1" 200 -

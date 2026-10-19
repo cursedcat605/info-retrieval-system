@@ -1,0 +1,10 @@
+2026-09-28 22:23:27,914 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-28 22:23:46,352 [INFO] ocr.batch: OCR 完成：共 3，识别 3，跳过 0，失败 0，空结果 0，耗时 18.4s，引擎 rapidocr
+2026-09-28 22:24:18,965 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-28 22:31:25,515 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-28 22:31:52,117 [INFO] ocr.batch: OCR 完成：共 92，识别 89，跳过 3，失败 0，空结果 0，耗时 453.1s，引擎 rapidocr
+2026-09-28 22:33:33,583 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-28 22:34:44,579 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-29 12:28:19,130 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-29 12:44:53,569 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）
+2026-09-29 12:49:59,199 [INFO] ocr.batch: 已载入 92 条图片元数据（来自 E:\个人proj\信息检索系统\data\raw\metadata）

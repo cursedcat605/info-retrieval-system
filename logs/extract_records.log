@@ -1,0 +1,8 @@
+2026-09-28 22:31:28,230 [INFO] extract_records: 抽取完成：86 个 OCR 结果 → 86 张图片、173 条记录，输出目录 E:\个人proj\信息检索系统\data\processed\_smoke
+2026-09-28 22:33:34,057 [INFO] extract_records: 抽取完成：92 个 OCR 结果 → 92 张图片、155 条记录，输出目录 E:\个人proj\信息检索系统\data\processed
+2026-09-28 22:34:44,945 [INFO] extract_records: 抽取完成：92 个 OCR 结果 → 92 张图片、155 条记录，输出目录 E:\个人proj\信息检索系统\data\processed
+2026-09-29 12:28:19,490 [INFO] extract_records: 抽取完成：92 个 OCR 结果 → 92 张图片、155 条记录，输出目录 E:\个人proj\信息检索系统\data\processed
+2026-09-29 12:44:53,922 [INFO] extract_records: 抽取完成：92 个 OCR 结果 → 92 张图片、155 条记录，输出目录 E:\个人proj\信息检索系统\data\processed
+2026-09-29 12:44:53,922 [INFO] extract_records: 纠错层：改写 0 行文本、覆盖 1 个字段；命中 1 条规则，未命中 0 条
+2026-09-29 12:49:59,592 [INFO] extract_records: 抽取完成：92 个 OCR 结果 → 92 张图片、155 条记录，输出目录 E:\个人proj\信息检索系统\data\processed
+2026-09-29 12:49:59,592 [INFO] extract_records: 纠错层：改写 0 行文本、覆盖 1 个字段；命中 1 条规则，未命中 0 条

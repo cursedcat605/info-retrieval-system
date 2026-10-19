@@ -1,0 +1,225 @@
+2026-09-29 13:09:15,547 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:09:15,563 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:09:15,567 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:09:15,571 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 13:09:15,576 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 13:09:15,580 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:09:15,586 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 13:09:15,586 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 13:09:15,586 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 13:09:15,592 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 13:09:15,612 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-18\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 13:09:32,810 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:09:32,826 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:09:32,830 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:09:32,836 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 13:09:32,841 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 13:09:32,847 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:09:32,853 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 13:09:32,853 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 13:09:32,854 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 13:09:32,859 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 13:09:32,875 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-19\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 13:10:12,178 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:10:12,196 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:10:12,200 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:10:12,204 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 13:10:12,210 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 13:10:12,214 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:10:12,218 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 13:10:12,219 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 13:10:12,219 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 13:10:12,224 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 13:10:12,239 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-20\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 13:12:13,430 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:12:13,451 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:12:13,457 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 13:12:13,463 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 13:12:13,468 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 13:12:13,473 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 13:12:13,477 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 13:12:13,477 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 13:12:13,478 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 13:12:13,482 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 13:12:13,497 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-21\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 20:43:19,939 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 20:43:19,944 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 20:43:19,945 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 20:43:19,947 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 20:43:19,948 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 20:43:19,953 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 20:43:19,957 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 20:43:19,957 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 20:43:19,957 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 20:43:19,959 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 20:43:19,970 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-22\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 20:48:59,454 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 20:48:59,461 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 20:48:59,463 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 20:48:59,465 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 20:48:59,467 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 20:48:59,469 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 20:48:59,473 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 20:48:59,474 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 20:48:59,474 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 20:48:59,476 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 20:48:59,480 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-23\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 21:43:58,297 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 21:43:58,306 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 21:43:58,308 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 21:43:58,310 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 21:43:58,312 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 21:43:58,314 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 21:43:58,316 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 21:43:58,316 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 21:43:58,316 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 21:43:58,317 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 21:43:58,323 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-24\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-09-29 21:52:56,156 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 21:52:56,167 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 21:52:56,169 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-09-29 21:52:56,170 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-09-29 21:52:56,172 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-09-29 21:52:56,173 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-09-29 21:52:56,177 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-09-29 21:52:56,177 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-09-29 21:52:56,177 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-09-29 21:52:56,179 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-09-29 21:52:56,183 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-25\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-18 16:11:56,018 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:11:56,042 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:11:56,049 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:11:56,055 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-18 16:11:56,060 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-18 16:11:56,066 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:11:56,072 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-18 16:11:56,072 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-18 16:11:56,072 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-18 16:11:56,077 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-18 16:11:56,104 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-1\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-18 16:12:22,723 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:12:22,743 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:12:22,748 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:12:22,754 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-18 16:12:22,759 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-18 16:12:22,765 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:12:22,769 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-18 16:12:22,770 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-18 16:12:22,770 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-18 16:12:22,775 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-18 16:12:22,791 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-2\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-18 16:15:06,986 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:15:07,004 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:15:07,011 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-18 16:15:07,017 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-18 16:15:07,023 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-18 16:15:07,029 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-18 16:15:07,034 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-18 16:15:07,035 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-18 16:15:07,035 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-18 16:15:07,040 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-18 16:15:07,057 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-3\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-19 20:47:18,775 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:47:18,782 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:47:18,785 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:47:18,788 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-19 20:47:18,789 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-19 20:47:18,791 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:47:18,792 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-19 20:47:18,792 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-19 20:47:18,792 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-19 20:47:18,793 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-19 20:47:18,805 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-7\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-19 20:49:04,529 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:49:04,542 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:49:04,545 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:49:04,547 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-19 20:49:04,549 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-19 20:49:04,554 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:49:04,558 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-19 20:49:04,558 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-19 20:49:04,558 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-19 20:49:04,562 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-19 20:49:04,571 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-8\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-19 20:56:58,688 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:56:58,701 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:56:58,704 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:56:58,706 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-19 20:56:58,709 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-19 20:56:58,713 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:56:58,716 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-19 20:56:58,716 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-19 20:56:58,716 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-19 20:56:58,720 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-19 20:56:58,731 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-9\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
+2026-10-19 20:57:35,036 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:57:35,046 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:57:35,050 [WARNING] search.fuzzy: 模糊匹配词表：顶层结构应为「groups 列表」或「别名映射」，已忽略
+2026-10-19 20:57:35,054 [WARNING] search.fuzzy: 模糊匹配词表：groups 应为列表，已忽略
+2026-10-19 20:57:35,056 [WARNING] search.fuzzy: 模糊匹配词表：有一条规则缺少 canonical（主词），已忽略
+2026-10-19 20:57:35,059 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 只有主词、没有别名，已忽略
+2026-10-19 20:57:35,061 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 42，已忽略
+2026-10-19 20:57:35,062 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 None，已忽略
+2026-10-19 20:57:35,062 [WARNING] search.fuzzy: 模糊匹配词表：无法识别的规则 '信工'，已忽略
+2026-10-19 20:57:35,065 [WARNING] search.fuzzy: 模糊匹配词表：信息工程学院 的等价写法超过 20 个，只取前 20 个
+2026-10-19 20:57:35,073 [WARNING] search.fuzzy: 模糊匹配词表读取失败（while parsing a flow node
+expected the node content, but found '<stream end>'
+  in "<unicode string>", line 2, column 1:
+    
+    ^），本次不做扩展：C:\Users\Celestine\AppData\Local\Temp\pytest-of-Celestine\pytest-10\test_broken_yaml_does_not_rais0\fuzzy_terms.yaml
